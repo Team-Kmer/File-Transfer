@@ -1,0 +1,22 @@
+#IntelliJ IDEA
+.idea
+*.iml
+*.iws
+*.ipr
+out/
+#help
+HELP.md
+#Logs
+logs/
+#OS
+.DS_Store
+Thumbs.db
+#Secrets
+.env
+*.pem
+*.key
+#local-config
+application-local.yml
+application-local.properties
+application--local.yml
+application--local.properties
