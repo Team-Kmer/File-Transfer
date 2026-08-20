@@ -32,10 +32,11 @@ curl http://localhost:8080/actuator/health
 
 ## Available endpoints (Phase 0)
 
-| Method | Path                | Purpose                              |
-|--------|---------------------|--------------------------------------|
-| GET    | `/actuator/health`  | Liveness and readiness health probe  |
-| GET    | `/actuator/info`    | Build and application metadata       |
+| Method | Path               | Purpose                                           |
+|--------|--------------------|---------------------------------------------------|
+| GET    | `/actuator/health` | Liveness and readiness health probe               |
+| GET    | `/actuator/info`   | Build and application metadata                    |
+| GET    | `/api/health`      | Application health check consumed by the frontend |
 
 Feature endpoints will be added in Phase 1 (see project scoping document).
 
@@ -48,13 +49,27 @@ Local dev overrides go in `application-local.yml` (gitignored, not tracked).
 
 We follow **package-by-feature** (see [CONTRIBUTING.md](../CONTRIBUTING.md)):
 
-| Package        | Scope                                                   |
-|----------------|---------------------------------------------------------|
-| `files/`       | File upload, download, storage, chunking                |
-| `rooms/`       | Pairing sessions (Phase 2)                              |
-| `signaling/`   | WebRTC signaling (Phase 3)                              |
-| `config/`      | Cross-cutting configuration (CORS, WebSocket, security) |
-| `common/`      | Shared utilities                                        |
+| Package      | Scope                                                   |
+|--------------|---------------------------------------------------------|
+| `files/`     | File upload, download, storage, chunking                |
+| `rooms/`     | Pairing sessions (Phase 2)                              |
+| `signaling/` | WebRTC signaling (Phase 3)                              |
+| `config/`    | Cross-cutting configuration (CORS, WebSocket, security) |
+| `common/`    | Shared utilities                                        |
+
+## CORS Configuration
+
+The backend uses **CORS** (not a dev proxy) to allow the Angular frontend to
+call the API. This keeps the same mechanism in dev and prod — no surprises
+when deploying.
+
+**Allowed origin** is configured in `application.yml`:
+
+```yaml
+app:
+  cors:
+    allowed-origin: http://localhost:4200
+```
 
 ## Build
 

@@ -35,7 +35,8 @@ Before you start, make sure you have:
 - **npm 10+** (bundled with Node)
 - **Git**
 - An IDE — we recommend **IntelliJ IDEA** or **VS Code**
-
+> ⚠️ For the app to work end-to-end, the **backend must be running on
+> `http://localhost:8080`**. See [`../../backend/README.md`](../../backend/README.md).
 ---
 
 ## 🚀 Getting Started

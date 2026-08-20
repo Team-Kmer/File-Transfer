@@ -13,3 +13,7 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+
+app:
+  cors:
+    allowed-origin: http://localhost:4200

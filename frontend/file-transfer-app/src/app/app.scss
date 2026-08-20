@@ -17,23 +17,6 @@ $api-radius: 4px;
     align-items: center;
     width: max-content;
   }
-
-  code {
-    background-color: $api-bg;
-    padding: 2px 8px;
-    border-radius: $api-radius;
-    font-size: 0.9em;
-    border: 1px solid $api-border;
-    transition: background-color 0.2s ease;
-
-    &:hover {
-      background-color: color.adjust($api-bg, $lightness: -5%);
-    }
-  }
-
-  p{
-    padding-bottom: 10px;
-  }
 }
 
 .sub-title {
