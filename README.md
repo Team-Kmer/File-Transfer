@@ -29,7 +29,8 @@ Open a new terminal and run the following commands. Each should return a version
 ```
 java -version
 mvn -v
-node -v
+node -v cd frontend/file-transfer-app
+npx ng version
 npm -v
 ng version
 git --version
