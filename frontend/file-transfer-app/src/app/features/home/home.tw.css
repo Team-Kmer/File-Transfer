@@ -1,0 +1,21 @@
+@reference "tailwindcss";
+
+.content{
+  @apply flex flex-col items-center;
+  @apply w-full;
+}
+
+.title{
+  @apply text-4xl font-bold text-blue-600;
+}
+
+.sub-title {
+  @apply py-4;
+  @apply text-[#636366];
+}
+
+.button{
+  @apply flex justify-center items-center gap-4;
+  @apply py-4;
+  @apply w-full;
+}
