@@ -70,12 +70,14 @@ src/
 │   ├── shared/       # Reusable dumb components, pipes, directives
 │   │                 # → building blocks used across features
 │   │
-│   ├── features/     # Business features, one folder per feature
-│   │                 # → upload/, download/, pairing/ (phase 2)
+│   ├── features/     # One folder per top-level route
+│   │                 # → home/    → route "/"
+│   │                 # → send/    → route "/send"
+│   │                 # → receive/ → route "/receive"
 │   │
-│   ├── app.ts        # Root component
-│   ├── app.config.ts # App-wide providers
-│   └── app.routes.ts # Route definitions
+│   ├── app.ts        # Root component (hosts the <router-outlet>)
+│   ├── app.config.ts # App-wide providers (router, HTTP client, etc.)
+│   └── app.routes.ts # Route table
 │
 ├── environments/     # Environment-specific configuration
 │   ├── environment.ts             # Production values
@@ -119,7 +121,6 @@ This frontend supports a phased delivery plan:
   WebSocket signaling, room-based pairing, QR codes, chunked uploads.
 - **Phase 3 — WebRTC** *(stretch goal)*
   Peer-to-peer transfer over the internet via WebRTC DataChannels.
-- 
 ---
 
 ## 🤝 Contributing
