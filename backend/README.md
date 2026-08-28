@@ -49,13 +49,13 @@ Local dev overrides go in `application-local.yml` (gitignored, not tracked).
 
 We follow **package-by-feature** (see [CONTRIBUTING.md](../CONTRIBUTING.md)):
 
-| Package      | Scope                                                   |
-|--------------|---------------------------------------------------------|
-| `files/`     | File upload, download, storage, chunking                |
-| `rooms/`     | Pairing sessions (Phase 2)                              |
+| Package     | Scope                                                   |
+|-------------|---------------------------------------------------------|
+| `file/`     | File upload, download, storage, chunking                |
+| `rooms/`    | Pairing sessions (Phase 2)                              |
 | `signaling/` | WebRTC signaling (Phase 3)                              |
-| `config/`    | Cross-cutting configuration (CORS, WebSocket, security) |
-| `common/`    | Shared utilities                                        |
+| `config/`   | Cross-cutting configuration (CORS, WebSocket, security) |
+| `common/`   | Shared utilities                                        |
 
 ## CORS Configuration
 
@@ -69,6 +69,20 @@ when deploying.
 app:
   cors:
     allowed-origin: http://localhost:4200
+```
+## File storage
+
+Uploaded files are written to a local directory and their metadata is kept in
+memory (no database in the MVP). The directory is created automatically at
+startup, and files are stored under an anonymized `UUID.extension` name.
+
+The storage path is configurable in `application.yml` and defaults to
+`<system temp dir>/file-transfer`:
+
+```yaml
+app:
+  storage:
+    path: ${java.io.tmpdir}/file-transfer
 ```
 
 ## Build
