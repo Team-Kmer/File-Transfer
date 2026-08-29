@@ -17,3 +17,5 @@ management:
 app:
   cors:
     allowed-origin: http://localhost:4200
+  storage:
+    path: ${java.io.tmpdir}/file-transfer
