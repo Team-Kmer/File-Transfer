@@ -38,7 +38,11 @@ curl http://localhost:8080/actuator/health
 | GET    | `/actuator/info`   | Build and application metadata                    |
 | GET    | `/api/health`      | Application health check consumed by the frontend |
 
-Feature endpoints will be added in Phase 1 (see project scoping document).
+## File endpoints (Phase 1)
+
+| Method | Path         | Purpose                                                      |
+|--------|--------------|--------------------------------------------------------------|
+| GET    | `/api/files` | List available files with their metadata (most recent first) |
 
 ## Configuration
 
