@@ -1,11 +1,10 @@
 spring:
-  application:
-    name: file-transfer-backend
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
-
+  application:
+    name: file-transfer-backend
 
 server:
   port: 8080
