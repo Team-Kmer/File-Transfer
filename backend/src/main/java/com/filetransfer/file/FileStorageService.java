@@ -71,6 +71,12 @@ public class FileStorageService {
         return List.copyOf(metadataById.values());
     }
 
+    public List<FileMetadata> findAllMostRecentFirst() {
+        return findAll().stream()
+                .sorted(Comparator.comparing(FileMetadata::uploadDate).reversed())
+                .toList();
+    }
+
     public boolean delete(UUID id) {
         FileMetadata metadata = metadataById.remove(id);
         if (metadata == null) {

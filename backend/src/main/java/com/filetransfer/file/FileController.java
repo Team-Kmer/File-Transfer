@@ -17,10 +17,10 @@ public class FileController {
         this.storageService = storageService;
     }
 
+
     @GetMapping
     public List<FileResponse> listFiles() {
-        return storageService.findAll().stream()
-                .sorted(Comparator.comparing(FileMetadata::uploadDate).reversed())
+        return storageService.findAllMostRecentFirst().stream()
                 .map(FileResponse::from)
                 .toList();
     }
