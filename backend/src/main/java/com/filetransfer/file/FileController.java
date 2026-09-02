@@ -17,7 +17,6 @@ public class FileController {
         this.storageService = storageService;
     }
 
-
     @GetMapping
     public List<FileResponse> listFiles() {
         return storageService.findAllMostRecentFirst().stream()

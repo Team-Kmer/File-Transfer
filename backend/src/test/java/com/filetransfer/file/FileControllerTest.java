@@ -29,7 +29,7 @@ class FileControllerTest {
 
     @Test
     void returns_200_and_empty_array_when_no_files() throws Exception {
-        when(storageService.findAll()).thenReturn(List.of());
+        when(storageService.findAllMostRecentFirst()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/files"))
                 .andExpect(status().isOk())
@@ -39,12 +39,12 @@ class FileControllerTest {
     @Test
     void returns_files_sorted_by_uploadedAt_descending() throws Exception {
         FileMetadata older = new FileMetadata(
-                UUID.randomUUID(), "old.txt", 10L,
-                Instant.parse("2026-01-01T10:00:00Z"), "text/plain", "uuid1.txt");
-        FileMetadata newer = new FileMetadata(
                 UUID.randomUUID(), "new.pdf", 20L,
-                Instant.parse("2026-06-01T10:00:00Z"), "application/pdf", "uuid2.pdf");
-        when(storageService.findAll()).thenReturn(List.of(older, newer));
+                Instant.parse("2026-01-01T10:00:00Z"), "application/pdf", "uuid2.pdf");
+        FileMetadata newer = new FileMetadata(
+                UUID.randomUUID(), "old.txt", 10L,
+                Instant.parse("2026-06-01T10:00:00Z"), "text/plain", "uuid1.txt");
+        when(storageService.findAllMostRecentFirst()).thenReturn(List.of(older, newer));
 
         mockMvc.perform(get("/api/files"))
                 .andExpect(status().isOk())
