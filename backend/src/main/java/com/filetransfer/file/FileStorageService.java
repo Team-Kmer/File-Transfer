@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,6 +70,12 @@ public class FileStorageService {
 
     public List<FileMetadata> findAll() {
         return List.copyOf(metadataById.values());
+    }
+
+    public List<FileMetadata> findAllMostRecentFirst() {
+        return findAll().stream()
+                .sorted(Comparator.comparing(FileMetadata::uploadDate).reversed())
+                .toList();
     }
 
     public boolean delete(UUID id) {
