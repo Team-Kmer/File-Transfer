@@ -40,9 +40,12 @@ curl http://localhost:8080/actuator/health
 
 ## File endpoints (Phase 1)
 
-| Method | Path         | Purpose                                                      |
-|--------|--------------|--------------------------------------------------------------|
-| GET    | `/api/files` | List available files with their metadata (most recent first) |
+| Method | Path                       | Purpose                                                      |
+|--------|----------------------------|--------------------------------------------------------------|
+| GET    | `/api/files`               | List available files with their metadata (most recent first) |
+| GET    | `/api/files/{id}/download` | download a stored file by its id                             |         
+| POST   | `/api/files/upload`        | upload a file by                                             |
+
 
 ## Configuration
 
