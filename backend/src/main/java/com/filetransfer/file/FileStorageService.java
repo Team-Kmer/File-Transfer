@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -105,5 +107,14 @@ public class FileStorageService {
             return "";
         }
         return filename.substring(lastDot);
+    }
+
+    public Resource loadAsResource(FileMetadata metadata) {
+        Path filePath = storagePath.resolve(metadata.storedFilename());
+        Resource resource = new FileSystemResource(filePath);
+        if (!resource.exists() || !resource.isReadable()) {
+            throw new IllegalStateException("Stored file is missing: " + metadata.storedFilename());
+        }
+        return resource;
     }
 }
