@@ -56,13 +56,13 @@ Local dev overrides go in `application-local.yml` (gitignored, not tracked).
 
 We follow **package-by-feature** (see [CONTRIBUTING.md](../CONTRIBUTING.md)):
 
-| Package     | Scope                                                   |
-|-------------|---------------------------------------------------------|
-| `file/`     | File upload, download, storage, chunking                |
-| `rooms/`    | Pairing sessions (Phase 2)                              |
+| Package      | Scope                                                   |
+|--------------|---------------------------------------------------------|
+| `file/`      | File upload, download, storage, chunking                |
+| `rooms/`     | Pairing sessions (Phase 2)                              |
 | `signaling/` | WebRTC signaling (Phase 3)                              |
-| `config/`   | Cross-cutting configuration (CORS, WebSocket, security) |
-| `common/`   | Shared utilities                                        |
+| `config/`    | Cross-cutting configuration (CORS, WebSocket, security) |
+| `common/`    | Shared utilities                                        |
 
 ## CORS Configuration
 
