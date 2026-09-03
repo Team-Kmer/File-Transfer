@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -13,8 +14,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -97,6 +100,35 @@ class FileControllerTest {
         mockMvc.perform(multipart("/api/files/upload").file(empty))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Uploaded file must not be empty"));
+    }
+
+    @Test
+    void returns_file_content_with_download_headers() throws Exception {
+        UUID id = UUID.randomUUID();
+        FileMetadata metadata = new FileMetadata(
+                id, "hello.txt", 5L,
+                Instant.parse("2026-06-01T10:00:00Z"), "text/plain", "uuid.txt");
+
+        when(storageService.findById(id)).thenReturn(Optional.of(metadata));
+        when(storageService.loadAsResource(metadata))
+                .thenReturn(new ByteArrayResource("Hello".getBytes()));
+
+        mockMvc.perform(get("/api/files/{id}/download", id))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", containsString("attachment; filename=\"hello.txt\"")))
+                .andExpect(header().string("Content-Type", "text/plain"))
+                .andExpect(header().longValue("Content-Length", 5L))
+                .andExpect(content().bytes("Hello".getBytes()));
+    }
+
+    @Test
+    void returns_404_when_downloading_unknown_id() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(storageService.findById(id)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/files/{id}/download", id))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("File not found: " + id));
     }
 
     @Test
