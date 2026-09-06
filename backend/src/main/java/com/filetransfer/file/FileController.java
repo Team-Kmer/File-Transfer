@@ -37,6 +37,7 @@ public class FileController {
         FileResponse response = FileResponse.from(metadata);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         if (!storageService.delete(id)) {
