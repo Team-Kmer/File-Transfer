@@ -1,0 +1,77 @@
+<input #fileInput type="file"
+       (change)="onFileSelected($event)"
+       [disabled]="disabled()"
+       class="hidden
+  "/>
+<div class="upload">
+  <div
+    class="upload-content"
+    [class.upload-disabled]="disabled()"
+    (click)="!disabled() && fileInput.click()"
+  >
+    @if (!file()) {
+      <div class="icons">
+        <mat-icon class="upload-icon">upload_queue</mat-icon>
+        <mat-icon class="cloud">cloud_queue</mat-icon>
+      </div>
+
+      <div class="hint"><i>Click to upload file</i></div>
+    }
+
+    @if (!file()) {
+      <button type="button" class="wait-btn" disabled>
+        <svg class="wait-btn-content" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Waiting for uploading...
+      </button>
+    }
+
+    <div class="file-content">
+      @if (file(); as file) {
+        @switch (previewKind()) {
+
+          @case ('image') {
+            <img class="image-preview" [src]="previewUrl()" [alt]="'Preview of ' + file.name"/>
+          }
+
+          @case ('pdf') {
+            <div class="file-thumbnail" aria-label="PDF document ready to send">
+              <div class="file-document" aria-hidden="true">
+                <mat-icon class="file-document-icon">
+                  description
+                </mat-icon>
+                <span class="file-type-badge">PDF</span>
+              </div>
+              <span class="file-ready-message">Ready to send</span>
+            </div>
+          }
+
+          @default {
+            <div class="file-thumbnail" aria-label="File ready to send">
+
+              <div class="file-document" aria-hidden="true">
+                <mat-icon class="file-document-icon">
+                  insert_drive_file
+                </mat-icon>
+
+                <span class="file-type-badge">{{ sendHandlerService.getFileExtension(file.name) }}</span>
+              </div>
+
+              <span class="file-ready-message">Ready to send</span>
+            </div>
+          }
+        }
+        <div class="file-name"><i>{{ file.name }}</i></div>
+        <div class="size"><i>{{ file.size / 1048576 | number }} MB</i></div>
+      }
+    </div>
+    @if (file()) {
+      <div class="close-icon" (click)="clearFile($event)">
+        <mat-icon class="close">close</mat-icon>
+      </div>
+    }
+  </div>
+</div>
