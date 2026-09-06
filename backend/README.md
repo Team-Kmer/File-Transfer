@@ -40,9 +40,12 @@ curl http://localhost:8080/actuator/health
 
 ## File endpoints (Phase 1)
 
-| Method | Path         | Purpose                                                      |
-|--------|--------------|--------------------------------------------------------------|
-| GET    | `/api/files` | List available files with their metadata (most recent first) |
+| Method | Path                       | Purpose                                                      |
+|--------|----------------------------|--------------------------------------------------------------|
+| GET    | `/api/files`               | List available files with their metadata (most recent first) |
+| GET    | `/api/files/{id}/download` | download a stored file by its id                             |         
+| POST   | `/api/files/upload`        | upload a file by                                             |
+
 
 ## Configuration
 
@@ -53,13 +56,13 @@ Local dev overrides go in `application-local.yml` (gitignored, not tracked).
 
 We follow **package-by-feature** (see [CONTRIBUTING.md](../CONTRIBUTING.md)):
 
-| Package     | Scope                                                   |
-|-------------|---------------------------------------------------------|
-| `file/`     | File upload, download, storage, chunking                |
-| `rooms/`    | Pairing sessions (Phase 2)                              |
+| Package      | Scope                                                   |
+|--------------|---------------------------------------------------------|
+| `file/`      | File upload, download, storage, chunking                |
+| `rooms/`     | Pairing sessions (Phase 2)                              |
 | `signaling/` | WebRTC signaling (Phase 3)                              |
-| `config/`   | Cross-cutting configuration (CORS, WebSocket, security) |
-| `common/`   | Shared utilities                                        |
+| `config/`    | Cross-cutting configuration (CORS, WebSocket, security) |
+| `common/`    | Shared utilities                                        |
 
 ## CORS Configuration
 
