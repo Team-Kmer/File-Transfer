@@ -1,9 +1,22 @@
-@reference "tailwindcss"
+@reference "tailwindcss";
 
-.send-content{
-  @apply p-8;
+:host {
+  @apply block w-full;
 }
 
-.content-text{
+.send-content {
+  @apply flex min-h-[60vh] w-full flex-col;
+  @apply items-center justify-start gap-6 p-8;
+}
+
+.content-text {
   @apply text-3xl font-bold;
+}
+
+.send {
+  @apply flex items-center gap-2;
+}
+
+.error {
+  @apply flex items-center gap-2 text-red-600;
 }

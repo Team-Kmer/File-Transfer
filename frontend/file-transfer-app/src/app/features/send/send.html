@@ -1,4 +1,32 @@
 <section class="send-content">
   <h1 class="content-text">Send a file</h1>
-  <p>Placeholder — upload UI coming soon.</p>
+
+  <app-upload
+    [(file)]="selectedFile"
+    [disabled]="state().status === CurrentState.uploading"
+    (validationError)="onValidationError($event)"
+  />
+  <button mat-raised-button [disabled]="!canSend()" (click)="onSend()"> Send</button>
+
+  @switch (state().status) {
+
+    @case (CurrentState.uploading) {
+      <div class="send">
+        <mat-progress-spinner mode="indeterminate" diameter="24"></mat-progress-spinner>
+        <span>Sending...</span>
+      </div>
+    }
+    @case (CurrentState.error) {
+      <div class="error">
+        <mat-icon>error</mat-icon>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  }
+  @if (uploadedFiles().length > 0) {
+    <app-display-uploaded-files
+      [uploadedFiles]="uploadedFiles()"
+    />
+  }
+
 </section>

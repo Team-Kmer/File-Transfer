@@ -8,7 +8,7 @@ import {AppError} from '../errors/app-error.model';
 @Injectable({providedIn: 'root'})
 export class FileApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiBaseUrl}/files`;
+  private readonly baseUrl = `${environment.apiBaseUrl}/files/upload`;
 
   uploadFile(file: File) {
     const formData = new FormData();

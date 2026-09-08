@@ -1,10 +1,11 @@
 @use "sass:color";
 
+
 .main{
   font-family: "DM Sans", sans-serif;
   display: flex;
   align-items: center;
   flex-direction: column;
-  max-width: 700px;
-  margin: 40px auto;
+  max-width: 900px;
+  margin: 0 auto;
 }

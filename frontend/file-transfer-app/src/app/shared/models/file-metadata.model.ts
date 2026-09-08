@@ -1,7 +1,7 @@
 export interface FileMetadata {
   id: string;
-  filename: string;
-  size: number;
-  contentType: string;
+  name: string;
+  sizeBytes: number;
   uploadedAt: string;
+  mimeType: string;
 }
