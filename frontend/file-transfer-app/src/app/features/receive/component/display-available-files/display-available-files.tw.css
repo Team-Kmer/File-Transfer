@@ -1,0 +1,69 @@
+@reference "tailwindcss";
+
+:host {
+  @apply mx-5 block;
+}
+
+.file-row-header {
+  @apply grid grid-cols-[minmax(0,3fr)_1fr_1fr_1fr];
+  @apply items-center justify-items-center gap-4 px-2 py-2;
+  @apply bg-indigo-200 rounded-t-lg;
+}
+
+.file-row {
+  @apply grid grid-cols-[minmax(0,3fr)_1fr_1fr_1fr];
+  @apply justify-items-center items-center gap-4 p-2;
+  @apply border border-gray-200 rounded-b-lg ;
+  @apply transition-colors hover:bg-gray-200 active:bg-indigo-100;
+}
+
+.file-name-text {
+  @apply min-w-0 flex-1 truncate;
+}
+
+.file-name {
+  @apply flex w-full min-w-0 items-center justify-start gap-2;
+}
+
+.file {
+  @apply justify-self-start;
+  @apply pl-4;
+}
+
+.file-marker {
+  @apply flex items-center justify-center;
+  @apply h-10 w-10 shrink-0;
+  @apply rounded-xl bg-gray-100;
+}
+
+.file-marker-icon {
+  @apply text-indigo-500;
+}
+
+.header-position {
+  @apply justify-self-center;
+}
+
+.download-button {
+  @apply inline-flex cursor-pointer items-center justify-center gap-2;
+  @apply rounded-lg bg-indigo-500 px-3 py-2;
+  @apply text-sm font-medium text-white;
+  @apply transition-colors hover:bg-indigo-700 active:bg-indigo-800;
+  @apply focus-visible:outline-none focus-visible:ring-2;
+  @apply focus-visible:ring-indigo-500 focus-visible:ring-offset-2;
+}
+
+.download-icon {
+  @apply h-4 w-4 text-xl leading-5;
+}
+
+.state-message {
+  @apply mx-5 flex min-h-40 flex-col items-center justify-center gap-2;
+  @apply rounded-xl border border-dashed border-gray-300;
+  @apply text-center text-gray-500;
+}
+
+.state-message mat-icon {
+  @apply text-4xl text-indigo-400;
+}
+
