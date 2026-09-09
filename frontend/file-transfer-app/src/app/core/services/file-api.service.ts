@@ -8,12 +8,12 @@ import {AppError} from '../errors/app-error.model';
 @Injectable({providedIn: 'root'})
 export class FileApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiBaseUrl}/files/upload`;
+  private readonly baseUrl = `${environment.apiBaseUrl}/files`;
 
   uploadFile(file: File) {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post<FileMetadata>(this.baseUrl, formData)
+    return this.http.post<FileMetadata>(`${this.baseUrl}/upload`, formData)
       .pipe(this.logAndThrowError('upload'))
   }
 
@@ -23,7 +23,7 @@ export class FileApiService {
   }
 
   downloadFile(id: string): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/${id}`, {responseType: 'blob'})
+    return this.http.get(`${this.baseUrl}/${id}/download`, {responseType: 'blob'})
       .pipe(this.logAndThrowError(`downloadFile(${id})`));
   }
 

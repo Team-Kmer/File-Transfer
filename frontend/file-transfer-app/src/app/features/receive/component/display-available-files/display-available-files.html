@@ -1,0 +1,56 @@
+@if (filesResource().isLoading()) {
+  <div class="state-message" role="status" aria-live="polite">
+    Loading files…
+  </div>
+} @else if (filesResource().value().length === 0) {
+  <div class="state-message">
+    <mat-icon>folder_open</mat-icon>
+    <strong>No files available</strong>
+    <span>Files uploaded from another device will appear here.</span>
+  </div>
+} @else {
+  <div class="files-table">
+    <div class="file-row-header">
+      <div class="header-position">File</div>
+      <div class="header-position">Size</div>
+      <div>Uploaded</div>
+      <div class="header-position">Action</div>
+    </div>
+
+    @for (file of filesResource().value(); track file.id) {
+      <div class="file-row">
+        <div class="file-name">
+          <div class="file-marker">
+            <mat-icon class="file-marker-icon">
+              file_present
+            </mat-icon>
+          </div>
+
+          <span class="file-name-text" [title]="file.name">
+            {{ file.name }}
+          </span>
+        </div>
+
+        <div class="file-size">
+          {{ formatFileSize(file.sizeBytes) }}
+        </div>
+
+        <div class="file-date">
+          {{ file.uploadedAt | date: 'medium' }}
+        </div>
+
+        <div class="file-action">
+          <button
+            type="button"
+            class="download-button"
+            (click)="onDownload(file)"
+            [attr.aria-label]="'Download ' + file.name"
+          >
+            <mat-icon class="download-icon">download</mat-icon>
+            <span>Download</span>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+}

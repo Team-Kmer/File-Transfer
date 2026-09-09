@@ -1,4 +1,43 @@
 <section class="receive-content">
-  <h1 class="content-text">Receiving a file</h1>
-  <p>Placeholder — upload UI coming soon.</p>
+  <header class="receive-content-header">
+    <div>
+      <h1 class="content-text">Available files</h1>
+
+      <p class="content-sub-text">
+        @if (filesResource().isLoading()) {
+          Loading files…
+        } @else {
+          {{ filesResource().value().length }} files ready to download
+        }
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="refresh-button"
+      (click)="refresh()"
+      [disabled]="filesResource().isLoading()"
+    >
+      <mat-icon>autorenew</mat-icon>
+      <span>Refresh</span>
+    </button>
+  </header>
+
+  @if (errorMessage(); as message) {
+    <div class="error-state" role="alert">
+      <div>
+        <strong>Unable to load files</strong>
+        <p>{{ message }}</p>
+      </div>
+
+      <button mat-button type="button" (click)="refresh()">
+        Retry
+      </button>
+    </div>
+  } @else {
+    <app-display-available-files
+      [filesResource]="filesResource()"
+      (download)="onDownload($event)"
+    />
+  }
 </section>
