@@ -3,6 +3,7 @@ import {FileApiService} from '../../../core/services/file-api.service';
 import {rxResource} from '@angular/core/rxjs-interop';
 import {FileMetadata} from '../../../shared/models/file-metadata.model';
 import {AppError} from '../../../core/errors/app-error.model';
+import {Observable} from 'rxjs';
 
 @Injectable()
 export class ReceiveHandlerService {
@@ -28,6 +29,10 @@ export class ReceiveHandlerService {
       },
     });
   };
+
+  public deleteFile(id: string): Observable<void> {
+    return this.fileApiService.deleteFile(id);
+  }
 
 }
 
