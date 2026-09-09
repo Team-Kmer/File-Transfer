@@ -23,8 +23,12 @@ export class Receive {
 
   protected readonly errorMessage = computed(() => {
     const error = this.filesResource().error();
-    const appError = ((error as Error | undefined)?.cause ?? error) as AppError | undefined;
-    return appError?.message ?? 'Unable to load the file list';
+
+    if (!error) {return null;}
+
+    const appError = ((error as Error).cause ?? error) as AppError;
+
+    return appError.message || 'Unable to load the file list';
   });
 
   protected readonly filesResource = computed(() => this.receiveHandlerService.fileResource);
