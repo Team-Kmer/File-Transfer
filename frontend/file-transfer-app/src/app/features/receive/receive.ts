@@ -22,17 +22,19 @@ export class Receive {
   protected readonly receiveHandlerService = inject(ReceiveHandlerService);
 
   protected readonly errorMessage = computed(() => {
-    const err = this.filesResource().error() as AppError | undefined;
-    return err?.message ?? null;
-  })
+    const error = this.filesResource().error();
+    const appError = ((error as Error | undefined)?.cause ?? error) as AppError | undefined;
+    return appError?.message ?? 'Unable to load the file list';
+  });
+
   protected readonly filesResource = computed(() => this.receiveHandlerService.fileResource);
 
   protected refresh(): void {
     this.filesResource().reload();
-  }
+  };
 
   protected onDownload(file: FileMetadata): void {
     this.receiveHandlerService.resolveDownLoad(file);
-  }
+  };
 
 }
