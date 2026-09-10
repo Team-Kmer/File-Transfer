@@ -11,53 +11,35 @@
 } @else {
   <div class="files-table">
     <div class="file-row-header">
-      <div class="header-position">File</div>
-      <div class="">Size</div>
-      <div class="">Uploaded</div>
-      <div class="">Action</div>
+      <div>File</div>
+      <div>Size</div>
+      <div>Uploaded</div>
+      <div>Actions</div>
     </div>
 
     @for (file of filesResource().value(); track file.id) {
-      <div class="file-row-table">
-        <div class="file-row">
-          <div class="file-name">
-            <div class="file-marker">
-              <mat-icon class="file-marker-icon">
-                file_present
-              </mat-icon>
-            </div>
-
-            <span class="file-name-text" [title]="file.name">
-            {{ file.name }}
-          </span>
+      <div class="file-row">
+        <div class="file-name">
+          <div class="file-marker">
+            <mat-icon class="file-marker-icon">file_present</mat-icon>
           </div>
-
-          <div class="file-size">
-            {{ formatFileSize(file.sizeBytes) }}
-          </div>
-
-          <div class="file-date">
-            {{ file.uploadedAt | date: 'medium' }}
-          </div>
-
-          <div class="file-action">
-            <div
-              type="button"
-              class="download-button"
-              (click)="onDownload(file)"
-              [attr.aria-label]="'Download ' + file.name"
-            >
-              <mat-icon class="download-icon">download</mat-icon>
-              <span>Download</span>
-            </div>
-          </div>
+          <span class="file-name-text" [title]="file.name">{{ file.name }}</span>
         </div>
-        <div
-          type="button"
-          class="delete-button"
-          (click)="onRemove(file)"
-        >
-          <mat-icon class="delete-icon">delete</mat-icon>
+
+        <div class="file-size">{{ formatFileSize(file.sizeBytes) }}</div>
+
+        <div>{{ file.uploadedAt | date: 'medium' }}</div>
+
+        <div class="file-action">
+          <button type="button" class="download-button" (click)="onDownload(file)"
+                  [attr.aria-label]="'Download ' + file.name">
+            <mat-icon class="download-icon">download</mat-icon>
+          </button>
+
+          <button type="button" class="delete-button" (click)="onRemove(file)"
+                  [attr.aria-label]="'Delete ' + file.name">
+            <mat-icon class="delete-icon">delete</mat-icon>
+          </button>
         </div>
       </div>
     }
