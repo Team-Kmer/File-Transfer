@@ -38,6 +38,7 @@
     <app-display-available-files
       [filesResource]="filesResource()"
       (download)="onDownload($event)"
+      (removeFile)="onDelete($event)"
     />
   }
 </section>

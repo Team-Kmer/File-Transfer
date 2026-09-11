@@ -6,6 +6,9 @@ import {AppError} from '../../core/errors/app-error.model';
 import {SendHandlerService} from '../send/service/send-handler.service';
 import {DisplayAvailableFiles} from './component/display-available-files/display-available-files';
 import {MatIcon} from '@angular/material/icon';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import {MatDialog} from '@angular/material/dialog';
+import {DeleteFileDialog} from './component/delete-file-dialog/delete-file-dialog';
 
 @Component({
   selector: 'app-receive',
@@ -20,7 +23,8 @@ import {MatIcon} from '@angular/material/icon';
 })
 export class Receive {
   protected readonly receiveHandlerService = inject(ReceiveHandlerService);
-
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
   protected readonly errorMessage = computed(() => {
     const error = this.filesResource().error();
 
@@ -41,4 +45,20 @@ export class Receive {
     this.receiveHandlerService.resolveDownLoad(file);
   };
 
+  protected onDelete(file: FileMetadata): void {
+    this.dialog.open(DeleteFileDialog, {
+        data: file,
+        width: '420px',
+        disableClose: true,
+      })
+      .afterClosed()
+      .subscribe((deleted: boolean) => {
+        if (!deleted) return;
+
+        this.filesResource().reload();
+        this.snackBar.open(`"${file.name}" deleted`, 'Close', {
+          duration: 3000,
+        });
+      });
+  }
 }

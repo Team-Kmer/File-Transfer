@@ -16,9 +16,8 @@ import {SendHandlerService} from '../../../send/service/send-handler.service';
 export class DisplayAvailableFiles {
   protected readonly sendHandlerService = inject(SendHandlerService);
 
-
   readonly filesResource = input.required<ResourceRef<FileMetadata[]>>();
-
+  readonly removeFile = output<FileMetadata>();
   readonly download = output<FileMetadata>();
 
   protected onDownload(file: FileMetadata): void {
@@ -28,4 +27,8 @@ export class DisplayAvailableFiles {
   protected formatFileSize(sizeBytes: number) {
     return this.sendHandlerService.formatFileSize(sizeBytes);
   };
+
+  protected onRemove(file: FileMetadata): void {
+    this.removeFile.emit(file);
+  }
 }
