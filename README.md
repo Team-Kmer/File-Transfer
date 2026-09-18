@@ -207,3 +207,57 @@ The current MVP uses a shared file list. Therefore, Machine A and Machine B
 both see every uploaded file, including files uploaded from the same machine.
 
 Files larger than 10 MB are expected to be rejected.
+
+## Troubleshooting
+
+### The Angular page is not reachable
+
+Make sure Angular was started with:
+
+```powershell
+npm start -- --host 0.0.0.0
+```
+
+Check that port `4200` is allowed by Windows Firewall and by any third-party
+firewall.
+
+### The frontend opens, but backend requests fail
+
+Check port `8080` from Machine B:
+
+```powershell
+Test-NetConnection <MACHINE_A_IP> -Port 8080
+```
+
+Make sure the backend was started with:
+
+```powershell
+$env:SERVER_ADDRESS = "0.0.0.0"
+```
+
+### A CORS error appears in the browser
+
+Make sure the configured CORS origin contains the exact protocol, IP address,
+and frontend port:
+
+```powershell
+$env:APP_CORS_LAN_ORIGIN = "http://<MACHINE_A_IP>:4200"
+```
+
+Restart the backend after changing this environment variable.
+
+### Ping works, but the TCP connection fails
+
+This normally indicates a firewall problem. Check Windows Firewall and any
+third-party security software installed on Machine A.
+
+### Both machines use the same Wi-Fi, but cannot communicate
+
+Some public, university, hotel, or guest Wi-Fi networks enable client
+isolation. Connect both machines to a private Wi-Fi network or to the same
+mobile hotspot.
+
+### The application stopped working after reconnecting to Wi-Fi
+
+Machine A may have received a different IP address. Restart both servers using
+the IP detection procedure and use the new network URL on Machine B.
