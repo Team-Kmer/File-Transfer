@@ -1,0 +1,190 @@
+1
+00:00:00,000 --> 00:00:05,007
+Hello, and welcome to this short demo of
+our file transfer app.
+
+2
+00:00:05,007 --> 00:00:09,776
+The idea behind it is simple: you have a
+file on one device,
+
+3
+00:00:09,776 --> 00:00:15,022
+and you want it on another, and this app
+lets you do exactly that,
+
+4
+00:00:15,022 --> 00:00:18,837
+in just a few clicks. Let me show you the
+setup.
+
+5
+00:00:18,837 --> 00:00:21,380
+On the left is the first device.
+
+6
+00:00:21,380 --> 00:00:24,321
+This one runs the application itself,
+
+7
+00:00:24,321 --> 00:00:28,851
+it acts as both the server and a client
+at the same time.
+
+8
+00:00:28,851 --> 00:00:31,951
+On the right side is the second device.
+
+9
+00:00:31,951 --> 00:00:34,494
+It doesn't run anything special.
+
+10
+00:00:34,494 --> 00:00:39,819
+It simply connects to the first device
+over the same Wi-Fi network.
+
+11
+00:00:39,819 --> 00:00:43,714
+And you can actually see this in the
+address bar:
+
+12
+00:00:43,714 --> 00:00:46,496
+it's the first device's IP address,
+
+13
+00:00:46,496 --> 00:00:50,470
+followed by the port of our file transfer
+service.
+
+14
+00:00:50,470 --> 00:00:55,000
+That's all it takes to join. Now, let's
+see it in action.
+
+15
+00:00:55,000 --> 00:00:57,583
+Let's start on the first device.
+
+16
+00:00:57,583 --> 00:01:01,619
+I'll pick a file that I want to share,
+here it is.
+
+17
+00:01:01,619 --> 00:01:07,108
+Now I simply click Send. And just like
+that, the file is on the way.
+
+18
+00:01:07,108 --> 00:01:08,964
+It only takes a moment,
+
+19
+00:01:08,964 --> 00:01:13,000
+and the app confirms that everything went
+through.
+
+20
+00:01:15,000 --> 00:01:18,800
+Because the file is now on the server,
+
+21
+00:01:18,800 --> 00:01:25,500
+we can see that both devices have access
+to the file that have been
+
+22
+00:01:25,500 --> 00:01:26,400
+uploaded,
+
+23
+00:01:26,400 --> 00:01:31,500
+and can both perform the actions that are
+possible.
+
+24
+00:01:31,500 --> 00:01:35,000
+That means delete or download them.
+
+25
+00:01:35,000 --> 00:01:39,788
+Let's move over to the second device and
+click Download,
+
+26
+00:01:39,788 --> 00:01:44,320
+and the file is saved locally, right
+where I want it.
+
+27
+00:01:44,320 --> 00:01:49,364
+And there it is: exactly the same file,
+with the same name,
+
+28
+00:01:49,364 --> 00:01:53,297
+now sitting on a completely different
+machine.
+
+29
+00:01:53,297 --> 00:01:58,000
+That's the whole purpose of the app, and
+it just works.
+
+30
+00:01:59,000 --> 00:02:04,309
+Finally, let's clean things up. Once a
+file has served its purpose,
+
+31
+00:02:04,309 --> 00:02:08,192
+there's no reason to keep it around. I
+select it,
+
+32
+00:02:08,192 --> 00:02:12,234
+and I click Delete. The file is removed
+right away,
+
+33
+00:02:12,234 --> 00:02:14,691
+and because the list is shared,
+
+34
+00:02:14,691 --> 00:02:20,000
+it disappears from both devices at the
+same time. Simple, and tidy.
+
+35
+00:02:21,000 --> 00:02:26,077
+And that's the full journey: we sent a
+file from the first device,
+
+36
+00:02:26,077 --> 00:02:30,154
+watched it appear on the second,
+downloaded it there,
+
+37
+00:02:30,154 --> 00:02:31,923
+and finally deleted it,
+
+38
+00:02:31,923 --> 00:02:36,923
+all between two real machines talking to
+each other over the same
+
+39
+00:02:36,923 --> 00:02:37,538
+network.
+
+40
+00:02:37,538 --> 00:02:41,000
+This wraps up the first phase of our
+project.
+
+41
+00:02:41,000 --> 00:02:43,000
+Thanks a lot for watching.
