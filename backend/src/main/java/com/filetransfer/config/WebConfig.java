@@ -21,7 +21,7 @@ public class WebConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource(CorsProperties corsProperties) {
         var config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(corsProperties.allowedOrigin()));
+        config.setAllowedOrigins(corsProperties.allowedOrigins());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(false);
