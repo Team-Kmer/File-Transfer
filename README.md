@@ -1,9 +1,36 @@
 # File-Transfer
-A file transfer application between devices (PC ↔ PC, PC ↔ phone) over local network and Internet.
+
+**File-Transfer lets you move files between your devices (PC ↔ PC, PC ↔ phone) over your local Wi-Fi network — no cloud, no account, and nothing to install on the receiving device: it just needs a browser.**
+
+Built with **Angular** (frontend) and **Spring Boot** (backend).
+
+## What it does / What it doesn't do
+
+**What it does (current MVP):**
+
+- **Send** a file from any device on the network
+- **List** every available file
+- **Download** any file to any device
+- **Delete** a file (with a confirmation prompt)
+
+**Current limitations:**
+
+- **Local network only** — every device must be on the same Wi-Fi network or mobile hotspot (no Internet transfer)
+- **10 MB maximum per file** — larger files are rejected
+- **One device must run the application** (the "main device"); the others only need a browser
+- **Shared file list** — every connected device sees every uploaded file
+
+## How it works
+
+One device — the **main device** — runs the application (backend + frontend). Every other device on the **same Wi-Fi network** opens the app in a **browser** using the main device's local IP address. Files uploaded from any device are stored on the main device and appear in a shared list visible to all connected devices.
 
 ## Prerequisites
 
-Before setting up the project, install the following tools. Versions listed are the ones validated on the reference machine.
+Only the **main device** (the one running the application) needs the tools below. **Client devices only need a recent web browser** (Chrome, Edge, Firefox, or Safari) — nothing to install.
+
+To simply run the app you need **Java** and **Node.js**. The other tools (Maven, Angular CLI, IntelliJ IDEA) are only useful for development — Maven and the Angular CLI already ship through the project's wrappers.
+
+Versions listed are the ones validated on the reference machine.
 
 | Tool           | Version          | Download                                                           |
 |----------------|------------------|--------------------------------------------------------------------|
@@ -29,10 +56,8 @@ Open a new terminal and run the following commands. Each should return a version
 ```
 java -version
 mvn -v
-node -v 
-npx ng version
+node -v
 npm -v
-ng version (please make sure that you're in the right diretory by typing: "cd frontend/file-transfer-app" and then run "ng version")
 git --version
 ```
 
@@ -46,6 +71,8 @@ Expected output (versions may vary slightly):
 - `git --version` → `git version 2.40` or higher
 
 If any command returns "command not found" (or "n'est pas reconnu" / "ist entweder falsch geschrieben"), the tool is either not installed or missing from your system PATH.
+
+> To check the Angular CLI, first move into the frontend folder — `cd frontend/file-transfer-app` — then run `ng version` (expected `Angular CLI: 22.1.4` or higher).
 
 ## Get the project
 
@@ -87,13 +114,13 @@ Wi-Fi network or mobile hotspot.
 
 ### Windows setup on Machine A
 
-Open PowerShell in the project root and find the IPv4 address of the active
-network interface:
+Open PowerShell in the project root and run:
 
 ```powershell
-Run `ipconfig` in powershell and find the `IPv4 Address` under the active Wi-Fi adapter.
-Use this address as Machine A's IP in the commands below.
+ipconfig
 ```
+
+Find the **`IPv4 Address`** under your active Wi-Fi adapter, e.g. `192.168.1.10`. Use this address as Machine A's IP (`<MACHINE_A_IP>`) in the commands below.
 
 #### Start the backend
 
@@ -103,7 +130,7 @@ In the same PowerShell terminal:
 cd backend
 
 $env:SERVER_ADDRESS = "0.0.0.0"
-$env:APP_CORS_LAN_ORIGIN = "http://${IPv4 Address of A}:4200"
+$env:APP_CORS_LAN_ORIGIN = "http://<MACHINE_A_IP>:4200"
 
 .\mvnw.cmd spring-boot:run
 ```
@@ -127,6 +154,35 @@ The terminal displays a network URL similar to:
 
 ```text
 http://192.168.1.10:4200
+```
+
+### macOS / Linux setup on Machine A
+
+Find the local IP address:
+
+```bash
+# macOS (en0 is usually Wi-Fi; try en1 if the result is empty)
+ipconfig getifaddr en0
+
+# Linux (take the first address shown)
+hostname -I
+```
+
+Start the backend (first terminal, project root):
+
+```bash
+cd backend
+export SERVER_ADDRESS=0.0.0.0
+export APP_CORS_LAN_ORIGIN="http://<MACHINE_A_IP>:4200"
+./mvnw spring-boot:run
+```
+
+Start the frontend (second terminal, project root):
+
+```bash
+cd frontend/file-transfer-app
+npm install
+npm start -- --host 0.0.0.0
 ```
 
 ### Connect from Machine B
@@ -208,7 +264,43 @@ both see every uploaded file, including files uploaded from the same machine.
 
 Files larger than 10 MB are expected to be rejected.
 
+## User guide — send from device A, download / delete from device B
+
+Open the app (`http://<MACHINE_A_IP>:4200`). The **Home** screen offers two actions, **Send** and **Receive**:
+
+![Home screen](docs/screenshots/home.png)
+
+**On device A** — click **Send**, choose a file (≤ 10 MB), then click **Send**:
+
+![Send a file, file selected](docs/screenshots/send.png)
+
+**On device B** — click **Receive**. The file appears in the **Available files** list, each row offering a **download** and a **delete** action:
+
+![Available files list](docs/screenshots/receive.png)
+
+Click the **download** icon to save the file on device B. Click the **delete** (trash) icon to remove it — a **"Delete file?"** prompt appears first, and a confirmation is shown once the file is deleted:
+
+![File deleted confirmation](docs/screenshots/delete.png)
+
+> Because the MVP uses a shared file list, both devices see every uploaded file, including files uploaded from the same device.
+
 ## Troubleshooting
+
+### "localhost refuses to connect" when opening the app
+
+The servers are not running yet, or have not finished starting. Make sure **both** terminals (backend and frontend) are running, and wait until Angular prints its network URL. On any device other than the main one, use `http://<MACHINE_A_IP>:4200`, never `localhost`.
+
+### The other device cannot access the application
+
+Make sure **both devices are on the same Wi-Fi network** (or mobile hotspot), that the frontend was started with `--host 0.0.0.0`, and that ports `4200` and `8080` are **allowed by the firewall** (see the firewall rules above). Public, guest, hotel, or university Wi-Fi often blocks device-to-device traffic — use a private network or a mobile hotspot.
+
+### "File too large" message
+
+The file exceeds the **10 MB** limit enforced by the backend. Send a file of 10 MB or less — this is a current MVP limitation.
+
+### Upload is very slow or stuck
+
+This is usually a weak Wi-Fi signal, a file close to the 10 MB limit, or the backend restarting. Move closer to the router, retry with a smaller file, and check the backend terminal for errors.
 
 ### The Angular page is not reachable
 
@@ -261,3 +353,7 @@ mobile hotspot.
 
 Machine A may have received a different IP address. Restart both servers using
 the IP detection procedure and use the new network URL on Machine B.
+
+## Contributing
+
+Interested in contributing? See [CONTRIBUTING.md](CONTRIBUTING.md).
