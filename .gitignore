@@ -20,3 +20,7 @@ application-local.yml
 application-local.properties
 application--local.yml
 application--local.properties
+#Test files
+# Do not commit binary test files.
+# Generate them locally with the script in docs/test-scenarios.md.
+*.bin
