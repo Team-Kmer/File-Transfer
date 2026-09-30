@@ -1,7 +1,7 @@
 @reference "tailwindcss";
 :host {
   @apply block w-full max-w-sm min-w-0;
-  @apply hover:text-indigo-500;
+  @apply hover:text-(--color-primary);
 }
 
 .upload {
@@ -13,9 +13,9 @@
   @apply flex h-full w-full min-w-0 flex-col;
   @apply items-center justify-center gap-6 p-4;
   @apply cursor-pointer;
-  @apply rounded-lg border-[1.5px] border-dashed border-gray-300;
+  @apply rounded-lg border-[1.5px] border-dashed border-(--color-border-strong);
   @apply shadow-lg transition-all duration-300 ease-in-out;
-  @apply hover:-translate-y-1 hover:border-indigo-400 hover:shadow-xl;
+  @apply hover:-translate-y-1 hover:border-(--color-primary) hover:shadow-xl;
 }
 
 .file-content {
@@ -41,7 +41,7 @@
   @apply text-4xl;
   @apply w-12 h-16;
   @apply opacity-80;
-  @apply hover:opacity-100 hover:text-indigo-500;
+  @apply hover:opacity-100 hover:text-(--color-primary);
 }
 
 .hint {
@@ -57,7 +57,7 @@
 .close-icon {
   @apply absolute -top-3 -right-2;
   @apply p-2;
-  @apply border-none rounded-full bg-(--mat-sys-primary-fixed-dim);
+  @apply border-none rounded-full bg-(--color-primary-soft) text-(--color-on-primary-soft);
   @apply backdrop-blur-md;
   @apply transition-all duration-200 ease-in-out;
   @apply hover:rotate-80;
@@ -70,17 +70,17 @@
 
 .wait-btn {
   @apply inline-flex items-center gap-2;
-  @apply bg-indigo-500 text-white px-4 py-2 rounded-md;
+  @apply bg-(--color-primary) text-(--color-on-primary) px-4 py-2 rounded-md;
   @apply disabled:opacity-70;
   @apply cursor-not-allowed
 }
 
 .wait-btn-content {
-  @apply animate-spin motion-reduce:hidden h-3 w-5 text-white;
+  @apply animate-spin motion-reduce:hidden h-3 w-5 text-(--color-on-primary);
 }
 
 .no-preview {
-  @apply mt-4 text-start justify-center items-center text-sm text-gray-500;
+  @apply mt-4 text-start justify-center items-center text-sm text-(--color-text-muted);
 }
 
 .file-thumbnail {
@@ -89,22 +89,22 @@
 
 .file-document {
   @apply relative flex h-28 w-20 items-center justify-center;
-  @apply rounded-md border border-gray-300 bg-white shadow-md;
+  @apply rounded-md border border-(--color-border) bg-(--color-surface) shadow-md;
 }
 
 .file-document-icon {
-  @apply text-5xl text-gray-400;
+  @apply text-5xl text-(--color-text-muted);
   @apply w-12 h-12;
 }
 
 .file-type-badge {
   @apply absolute -bottom-2 rounded-md;
-  @apply bg-indigo-600 px-3 py-1;
-  @apply text-xs font-semibold text-white;
+  @apply bg-(--color-primary) px-3 py-1;
+  @apply text-xs font-semibold text-(--color-on-primary);
 }
 
 .file-ready-message {
-  @apply mt-2 text-sm text-gray-500;
+  @apply mt-2 text-sm text-(--color-text-muted);
 }
 
 .image-preview {
@@ -113,5 +113,5 @@
 
 .upload-disabled {
   @apply cursor-not-allowed opacity-60;
-  @apply hover:translate-y-0 hover:border-gray-300 hover:shadow-lg;
+  @apply hover:translate-y-0 hover:border-(--color-border-strong) hover:shadow-lg;
 }
