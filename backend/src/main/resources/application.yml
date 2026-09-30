@@ -27,3 +27,6 @@ app:
     path: ${java.io.tmpdir}/file-transfer
   rooms:
     ttl: 24h
+    chunk-size: 5MB
+    max-file-size: 2GB
+    blocked-extensions: exe, msi, bat, cmd, com, scr, pif, ps1, vbs, jar, sh, dll

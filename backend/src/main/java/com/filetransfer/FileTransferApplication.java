@@ -3,11 +3,12 @@ package com.filetransfer;
 import com.filetransfer.rooms.RoomProperties;
 import org.springframework.boot.SpringApplication;
 import com.filetransfer.file.StorageProperties;
+import com.filetransfer.file.chunked.ChunkedUploadProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@EnableConfigurationProperties({StorageProperties.class, RoomProperties.class})
+@EnableConfigurationProperties({StorageProperties.class, RoomProperties.class, ChunkedUploadProperties.class})
 public class FileTransferApplication {
 
     public static void main(String[] args) {

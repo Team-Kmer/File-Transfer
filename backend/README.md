@@ -46,6 +46,13 @@ curl http://localhost:8080/actuator/health
 | GET    | `/api/files/{id}/download` | download a stored file by its id                             |         
 | POST   | `/api/files/upload`        | upload a file by                                             |
 
+## Chunked upload endpoints (Phase 2)
+
+| Method | Path                           | Purpose                                                                   |
+|--------|--------------------------------|---------------------------------------------------------------------------|
+| POST   | `/api/files/upload/init`       | Open an upload session and get `uploadId`, `chunkSize`, `totalChunks`     |
+| DELETE | `/api/files/upload/{uploadId}` | Is the cleanup path**. Abort a session and delete its temporary directory |
+
 
 ## Configuration
 
