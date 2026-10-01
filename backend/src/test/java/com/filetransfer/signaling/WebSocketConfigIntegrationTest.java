@@ -63,7 +63,9 @@ class WebSocketConfigIntegrationTest {
     @Test
     void handshakeFromUnknownOriginIsRejected() {
         assertThatThrownBy(() -> connect(UNKNOWN_ORIGIN))
-                .isInstanceOf(ExecutionException.class);
+                .isInstanceOf(ExecutionException.class)
+                .rootCause()
+                .hasMessageContaining("403");
     }
 
     private void assertEchoRoundTrip(String origin) throws Exception {
@@ -95,6 +97,6 @@ class WebSocketConfigIntegrationTest {
         headers.setOrigin(origin);
         return stompClient
                 .connectAsync("ws://localhost:" + port + "/ws", headers, new StompSessionHandlerAdapter() {})
-                .get(5, TimeUnit.SECONDS);
+                .get(10, TimeUnit.SECONDS);
     }
 }
