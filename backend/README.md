@@ -92,6 +92,35 @@ app:
     path: ${java.io.tmpdir}/file-transfer
 ```
 
+## WebSocket (STOMP)
+
+- Connection URL: `ws://localhost:8080/ws`
+- Subscribe on `/topic/...`, send on `/app/...`
+- Allowed origins: same list as the REST API (`app.cors.allowed-origins`), including `APP_CORS_LAN_ORIGIN`
+
+### Echo (dev profile only)
+
+A message sent to `/app/echo` is broadcast back on `/topic/echo`. It only exists under the `dev` profile:
+
+```powershell
+$env:SPRING_PROFILES_ACTIVE = "dev"
+.\mvnw.cmd spring-boot:run
+```
+
+### Manual test
+
+Open `http://localhost:4200`, then in the browser console (F12) run these lines one by one:
+
+```js
+const ws = new WebSocket("ws://localhost:8080/ws");
+ws.onmessage = e => console.log(e.data);
+ws.send("CONNECT\naccept-version:1.2\nhost:localhost\n\n\0");
+ws.send("SUBSCRIBE\nid:sub-0\ndestination:/topic/echo\n\n\0");
+ws.send("SEND\ndestination:/app/echo\ncontent-type:text/plain\n\nhello\0");
+```
+
+Expected: a `CONNECTED` frame, then a `MESSAGE` frame containing `hello`.
+
 ## Build
 
 ```bash
