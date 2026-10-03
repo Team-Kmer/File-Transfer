@@ -25,3 +25,5 @@ app:
       - ${APP_CORS_LAN_ORIGIN:http://localhost:4200}
   storage:
     path: ${java.io.tmpdir}/file-transfer
+  rooms:
+    ttl: 24h
