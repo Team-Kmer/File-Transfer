@@ -120,6 +120,16 @@ class RoomServiceTest {
         assertThrows(InvalidRoomCodeException.class, () -> service.exists(code));
     }
 
+    @Test
+    void create_reuses_code_of_expired_room() {
+        RoomService service = expiredServiceWith(generatorReturning("111111", "111111"));
+
+        service.create();
+        Room room2 = service.create();
+
+        assertEquals("111111", room2.getCode());
+    }
+
     private RoomService serviceWith(RoomCodeGenerator generator) {
         return new RoomService(generator, clock, new RoomProperties(Duration.ofHours(24)));
     }

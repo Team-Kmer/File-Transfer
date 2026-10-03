@@ -28,6 +28,8 @@ public class RoomService {
 
     Room create() {
         Instant now = clock.instant();
+        removeExpiredRooms(now);
+
         while (true) {
             String code = codeGenerator.generate();
             Room room = new Room(now, now.plus(ttl), code);
@@ -53,18 +55,26 @@ public class RoomService {
         return room;
     }
 
+    public boolean exists(String code) {
+        validateCode(code);
+        return isActiveRoom(roomsByCode.get(code));
+    }
+
     private void validateCode(String code) {
         if (code == null || !CODE_PATTERN.matcher(code).matches()) {
             throw new InvalidRoomCodeException("Invalid room code: '" + code + "' must be exactly 6 digits");
         }
     }
 
-    public boolean exists(String code) {
-        validateCode(code);
-        return isActiveRoom(roomsByCode.get(code));
-    }
-
     private boolean isActiveRoom(Room room) {
         return room != null && !room.isExpiredAt(clock.instant());
+    }
+
+    private void removeExpiredRooms(Instant now) {
+        roomsByCode.forEach((code, room) -> {
+            if (room.isExpiredAt(now)) {
+                roomsByCode.remove(code, room);
+            }
+        });
     }
 }
