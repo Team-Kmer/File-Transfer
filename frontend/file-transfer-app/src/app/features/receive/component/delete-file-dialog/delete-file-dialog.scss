@@ -1,0 +1,8 @@
+@use '@angular/material' as mat;
+
+.confirm-delete-button {
+  @include mat.button-overrides((
+    filled-container-color: var(--color-danger),
+    filled-label-text-color: var(--color-on-danger),
+  ));
+}

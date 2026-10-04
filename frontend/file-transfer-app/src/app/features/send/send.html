@@ -6,7 +6,7 @@
     [disabled]="state().status === CurrentState.uploading"
     (validationError)="onValidationError($event)"
   />
-  <button mat-raised-button [disabled]="!canSend()" (click)="onSend()"> Send</button>
+  <button mat-flat-button [disabled]="!canSend()" (click)="onSend()">Send</button>
 
   @switch (state().status) {
 

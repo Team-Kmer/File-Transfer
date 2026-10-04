@@ -5,37 +5,184 @@
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 @use "tailwindcss";
+@use "@fontsource-variable/figtree";
+@use "@fontsource-variable/bricolage-grotesque";
+@use "@fontsource-variable/jetbrains-mono";
+
+// ===== Design tokens — light theme =====
+:root {
+  color-scheme: light;
+
+  // --- Colours: surfaces ---
+  --color-bg: #F7F5F0;
+  --color-surface: #FFFFFF;
+  --color-surface-sunken: #EFEBE3;
+  --color-border: #E3DED4;
+  --color-border-strong: #8F887B;
+
+  // --- Colours: text ---
+  --color-text: #17201E;
+  --color-text-muted: #56615D;
+
+  // --- Colours: primary (sea green) ---
+  --color-primary: #0B7A6E;
+  --color-primary-hover: #096559;
+  --color-on-primary: #FFFFFF;
+  --color-primary-soft: #DDF3EE;
+  --color-on-primary-soft: #0A5E55;
+
+  // --- Colours: feedback ---
+  --color-warning: #9A5B00;
+  --color-warning-soft: #FCEFD9;
+  --color-on-warning-soft: #7A4700;
+  --color-danger: #B83A28;
+  --color-danger-soft: #FBE6E1;
+  --color-on-danger-soft: #8E2A1C;
+  --color-on-danger: #FFFFFF;
+  --color-overlay: rgba(23, 32, 30, 0.45);
+
+  // --- Typography ---
+  --font-display: 'Bricolage Grotesque Variable', Georgia, serif;
+  --font-body: 'Figtree Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  // --- Typography: roles (weight size/line-height family) ---
+  --text-display-xl: 700 3.25rem/1.1 var(--font-display);  // 52px
+  --text-display-lg: 700 2rem/1.15 var(--font-display);    // 32px
+  --text-title: 700 1.25rem/1.2 var(--font-display);       // 20px
+  --text-body: 400 1rem/1.5 var(--font-body);              // 16px
+  --text-small: 400 0.875rem/1.45 var(--font-body);        // 14px
+  --text-code: 600 4rem/1 var(--font-mono);                // 64px
+  --text-data: 600 1.0625rem/1.3 var(--font-mono);         // 17px
+
+  // --- Spacing (4 px scale) ---
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  // --- Radii ---
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 999px;
+
+  // --- Shadows ---
+  --shadow-sm: 0 1px 2px rgba(23, 32, 30, 0.06), 0 1px 1px rgba(23, 32, 30, 0.04);
+  --shadow-md: 0 8px 24px rgba(23, 32, 30, 0.08), 0 2px 6px rgba(23, 32, 30, 0.05);
+
+
+}
+
+// ===== Design tokens — dark theme =====
+@mixin dark-tokens {
+  color-scheme: dark;
+
+  --color-bg: #0F1413;
+  --color-surface: #171D1C;
+  --color-surface-sunken: #0B0F0E;
+  --color-border: #27302E;
+  --color-border-strong: #5E6B67;
+
+  --color-text: #EAF0EE;
+  --color-text-muted: #9AA7A3;
+
+  --color-primary: #45D1BD;
+  --color-primary-hover: #6BDDCC;
+  --color-on-primary: #062320;
+  --color-primary-soft: #133A35;
+  --color-on-primary-soft: #8FE6D8;
+
+  --color-warning: #F0B454;
+  --color-warning-soft: #3A2A10;
+  --color-on-warning-soft: #F6CC85;
+  --color-danger: #FF8A73;
+  --color-danger-soft: #3D1B15;
+  --color-on-danger-soft: #FFB3A3;
+  --color-on-danger: #2A0D08;
+  --color-overlay: rgba(0, 0, 0, 0.6);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+
+}
+
+// 1. Manual choice: <html data-theme="dark">
+:root[data-theme='dark'] {
+  @include dark-tokens;
+}
+
+// 2. "System" choice: follow the OS unless the user forced light
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include dark-tokens;
+  }
+}
 
 html {
   height: 100%;
   @include mat.theme(
-    (
-      color: (
-        primary: mat.$azure-palette,
-        tertiary: mat.$blue-palette,
-      ),
-      typography: Roboto,
-      density: 0,
-    )
-  );
+      (
+        color: (
+          primary: mat.$azure-palette,
+          tertiary: mat.$blue-palette,
+        ),
+        typography: (
+          plain-family: 'Figtree Variable',
+          brand-family: 'Bricolage Grotesque Variable',
+        )
+      ));
+
+  // Every button in the app uses the design tokens
+  @include mat.button-overrides((
+    // Filled buttons: primary actions
+    filled-container-color: var(--color-primary),
+    filled-label-text-color: var(--color-on-primary),
+    filled-container-shape: var(--radius-full),
+    filled-container-height: 48px,
+    filled-label-text-font: var(--font-body),
+    filled-disabled-container-color: var(--color-border),
+    filled-disabled-label-text-color: var(--color-text-muted),
+
+    // Text buttons: secondary actions (Cancel, Retry)
+    text-label-text-color: var(--color-primary),
+  ));
+
+  // Every dialog uses the design tokens
+  @include mat.dialog-overrides((
+    container-color: var(--color-surface),
+    subhead-color: var(--color-text),
+    supporting-text-color: var(--color-text-muted),
+  ));
 }
 
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
-  color-scheme: light;
-
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
-  font: var(--mat-sys-body-medium);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font: var(--text-body);
 
   // Reset the user agent margin.
   margin: 0;
   height: 100%;
 }
-/* You can add global styles to this file, and also import other style files */
 
+h1 {
+  font: var(--text-display-lg);
+}
+
+h2,
+h3 {
+  font: var(--text-title);
+}
+
+code,
+kbd,
+pre,
+samp {
+  font: var(--text-data);
+}

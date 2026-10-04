@@ -354,6 +354,12 @@ mobile hotspot.
 Machine A may have received a different IP address. Restart both servers using
 the IP detection procedure and use the new network URL on Machine B.
 
-## Contributing
+## Design
+The Phase 2 screens are designed before any screen code. They will be validated by the PM before implementation starts.
 
+- **Mock-ups (PDF):** [docs/File-Transfer_Phase2_Mockups.pdf](docs/File-Transfer_Phase2_Mockups.pdf)
+- **Design tokens:** colours, typography, spacing, radii and shadows are defined as CSS custom properties in
+[`styles.scss`](frontend/file-transfer-app/src/styles.scss), with a light and a dark set.
+
+## Contributing
 Interested in contributing? See [CONTRIBUTING.md](CONTRIBUTING.md).

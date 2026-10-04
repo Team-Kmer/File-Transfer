@@ -5,13 +5,13 @@
   @apply w-full;
 }
 
-.title{
-  @apply text-4xl font-bold text-blue-600;
+.title {
+  font: var(--text-display-xl);
 }
 
 .sub-title {
   @apply py-4;
-  @apply text-[#636366];
+  @apply text-(--color-text-muted);
 }
 
 .button{
