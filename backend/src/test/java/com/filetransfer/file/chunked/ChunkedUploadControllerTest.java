@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class ChunkedUploadControllerTest {
 
-    private static final String ROOM = "ABC123";
+    private static final String ROOM = "123456";
     private static final long FIVE_MB = 5L * 1024 * 1024;
 
     @Autowired
@@ -100,16 +100,16 @@ class ChunkedUploadControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{not json"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Malformed request body"));
+                .andExpect(jsonPath("$.message").value("Request body is missing or malformed"));
     }
 
     @Test
     void returns_404_when_room_is_unknown() throws Exception {
         mockMvc.perform(post("/api/files/upload/init")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body("video.mp4", 100, "UNKNOWN")))
+                        .content(body("video.mp4", 100, "999999")))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Room not found: UNKNOWN"));
+                .andExpect(jsonPath("$.message").value("Room not found: 999999"));
     }
 
     @Test

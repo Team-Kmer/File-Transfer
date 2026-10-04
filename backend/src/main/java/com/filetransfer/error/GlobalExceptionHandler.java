@@ -73,26 +73,6 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleMethodArgumentNotValidException(
-            MethodArgumentNotValidException exception,
-            HttpServletRequest request
-    ) {
-        String message = exception.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getField() + " " + error.getDefaultMessage())
-                .sorted()
-                .collect(Collectors.joining(", "));
-        return buildError(HttpStatus.BAD_REQUEST, message, request);
-    }
-
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiError> handleHttpMessageNotReadableException(
-            HttpMessageNotReadableException exception,
-            HttpServletRequest request
-    ) {
-        return buildError(HttpStatus.BAD_REQUEST, "Malformed request body", request);
-    }
-
     @ExceptionHandler(FileTooLargeException.class)
     public ResponseEntity<ApiError> handleFileTooLargeException(
             FileTooLargeException exception,

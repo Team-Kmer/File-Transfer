@@ -4,7 +4,7 @@ import com.filetransfer.error.EmptyFileException;
 import com.filetransfer.error.FileTooLargeException;
 import com.filetransfer.error.ResourceNotFoundException;
 import com.filetransfer.error.UnsupportedFileTypeException;
-import com.filetransfer.rooms.InMemoryRoomService;
+import com.filetransfer.rooms.RoomService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -18,10 +18,12 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ChunkedUploadServiceTest {
 
-    private static final String ROOM = "ABC123";
+    private static final String ROOM = "123456";
 
     @TempDir
     Path tempDir;
@@ -35,8 +37,8 @@ class ChunkedUploadServiceTest {
                 DataSize.ofMegabytes(5),
                 DataSize.ofMegabytes(20),
                 List.of("exe", "bat"));
-        InMemoryRoomService roomService = new InMemoryRoomService();
-        roomService.register(ROOM);
+        RoomService roomService = mock(RoomService.class);
+        when(roomService.exists(ROOM)).thenReturn(true);
         service = new ChunkedUploadService(properties, roomService, new FileTypeValidator(properties));
     }
 
@@ -84,7 +86,7 @@ class ChunkedUploadServiceTest {
 
     @Test
     void initRejectsUnknownRoom() {
-        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.txt", 10L, "text/plain", "NOPE")))
+        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.txt", 10L, "text/plain", "999999")))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
