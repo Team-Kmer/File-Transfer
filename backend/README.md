@@ -30,28 +30,22 @@ curl http://localhost:8080/actuator/health
 # → {"status":"UP", ...}
 ```
 
-## Available endpoints (Phase 0)
+## Available endpoints
 
-| Method | Path               | Purpose                                           |
-|--------|--------------------|---------------------------------------------------|
-| GET    | `/actuator/health` | Liveness and readiness health probe               |
-| GET    | `/actuator/info`   | Build and application metadata                    |
-| GET    | `/api/health`      | Application health check consumed by the frontend |
-
-## File endpoints (Phase 1)
-
-| Method | Path                       | Purpose                                                      |
-|--------|----------------------------|--------------------------------------------------------------|
-| GET    | `/api/files`               | List available files with their metadata (most recent first) |
-| GET    | `/api/files/{id}/download` | download a stored file by its id                             |         
-| POST   | `/api/files/upload`        | upload a file by                                             |
-
-## Chunked upload endpoints (Phase 2)
-
-| Method | Path                           | Purpose                                                                   |
-|--------|--------------------------------|---------------------------------------------------------------------------|
-| POST   | `/api/files/upload/init`       | Open an upload session and get `uploadId`, `chunkSize`, `totalChunks`     |
-| DELETE | `/api/files/upload/{uploadId}` | Is the cleanup path**. Abort a session and delete its temporary directory |
+| Method     | Path                               | Purpose                                                                       |
+|------------|------------------------------------|-------------------------------------------------------------------------------|
+| GET        | `/actuator/health`                 | Liveness and readiness health probe                                           |
+| GET        | `/actuator/info`                   | Build and application metadata                                                |
+| GET        | `/api/health`                      | Application health check consumed by the frontend                             |
+| Method     | Path                               | Purpose                                                                       |
+| ---------- | ---------------------------------- | ----------------------------------------------------------------------------- |
+| GET        | `/api/files`                       | List available files with their metadata (most recent first)                  |
+| GET        | `/api/files/{id}/download`         | download a stored file by its id                                              |         
+| POST       | `/api/files/upload`                | upload a file by                                                              |
+| Method     | Path                               | Purpose                                                                       |
+| --------   | --------------------------------   | ---------------------------------------------------------------------------   |
+| POST       | `/api/files/upload/init`           | Open an upload session and get `uploadId`, `chunkSize`, `totalChunks`         |
+| DELETE     | `/api/files/upload/{uploadId}`     | Is the cleanup path**. Abort a session and delete its temporary directory     |
 
 
 ## Configuration

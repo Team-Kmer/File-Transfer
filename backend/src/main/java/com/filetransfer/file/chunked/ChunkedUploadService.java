@@ -5,6 +5,7 @@ import com.filetransfer.error.FileTooLargeException;
 import com.filetransfer.error.ResourceNotFoundException;
 import com.filetransfer.error.UnsupportedFileTypeException;
 import com.filetransfer.rooms.RoomService;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -40,10 +41,9 @@ public class ChunkedUploadService {
         this.fileTypeValidator = fileTypeValidator;
     }
 
-    public UploadSession init(InitUploadRequest request) {
+    public UploadSession init(@NonNull InitUploadRequest request) {
         String filename = sanitizeFilename(request.filename());
 
-        // Validation order: 400 (empty) -> 404 (room) -> 413 (size) -> 415 (type)
         if (request.sizeBytes() == 0) {
             throw new EmptyFileException("Uploaded file must not be empty");
         }
