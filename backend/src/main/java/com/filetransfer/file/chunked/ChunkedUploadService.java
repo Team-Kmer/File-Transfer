@@ -2,8 +2,9 @@ package com.filetransfer.file.chunked;
 
 import com.filetransfer.error.EmptyFileException;
 import com.filetransfer.error.FileTooLargeException;
-import com.filetransfer.error.ResourceNotFoundException;
+import com.filetransfer.error.RoomNotFoundException;
 import com.filetransfer.error.UnsupportedFileTypeException;
+import com.filetransfer.error.UploadSessionNotFoundException;
 import com.filetransfer.rooms.RoomService;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -48,7 +48,7 @@ public class ChunkedUploadService {
             throw new EmptyFileException("Uploaded file must not be empty");
         }
         if (!roomService.exists(request.roomCode())) {
-            throw new ResourceNotFoundException("Room not found: " + request.roomCode());
+            throw new RoomNotFoundException("Room not found: " + request.roomCode());
         }
         if (request.sizeBytes() > maxFileSize) {
             throw new FileTooLargeException(
@@ -82,14 +82,18 @@ public class ChunkedUploadService {
         return session;
     }
 
-    public Optional<UploadSession> findById(UUID uploadId) {
-        return Optional.ofNullable(sessionsById.get(uploadId));
+    public UploadSession getById(UUID uploadId) {
+        UploadSession session = sessionsById.get(uploadId);
+        if (session == null) {
+            throw new UploadSessionNotFoundException("Upload session not found: " + uploadId);
+        }
+        return session;
     }
 
     public void abort(UUID uploadId) {
         UploadSession session = sessionsById.remove(uploadId);
         if (session == null) {
-            throw new ResourceNotFoundException("Upload session not found: " + uploadId);
+            throw new UploadSessionNotFoundException("Upload session not found: " + uploadId);
         }
         session.markAborted();
         deleteRecursively(sessionDirectory(uploadId));

@@ -2,8 +2,9 @@ package com.filetransfer.file.chunked;
 
 import com.filetransfer.error.EmptyFileException;
 import com.filetransfer.error.FileTooLargeException;
-import com.filetransfer.error.ResourceNotFoundException;
+import com.filetransfer.error.RoomNotFoundException;
 import com.filetransfer.error.UnsupportedFileTypeException;
+import com.filetransfer.error.UploadSessionNotFoundException;
 import com.filetransfer.rooms.RoomService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,7 +61,7 @@ class ChunkedUploadServiceTest {
         assertThat(session.receivedChunks()).isEmpty();
         assertThat(session.createdAt()).isNotNull();
         assertThat(session.status()).isEqualTo(UploadStatus.INITIALIZED);
-        assertThat(service.findById(session.uploadId())).contains(session);
+        assertThat(service.getById(session.uploadId())).isEqualTo(session);
     }
 
     @Test
@@ -87,7 +88,7 @@ class ChunkedUploadServiceTest {
     @Test
     void initRejectsUnknownRoom() {
         assertThatThrownBy(() -> service.init(new InitUploadRequest("a.txt", 10L, "text/plain", "999999")))
-                .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(RoomNotFoundException.class);
     }
 
     @Test
@@ -115,7 +116,7 @@ class ChunkedUploadServiceTest {
     }
 
     @Test
-    void initDoesNotCreateDirectoryWhenValidationFails() throws IOException {
+    void initDoesNotCreateDirectoryWhenValidationFails(){
         assertThatThrownBy(() -> service.init(new InitUploadRequest("a.bat", 10L, null, ROOM)))
                 .isInstanceOf(UnsupportedFileTypeException.class);
 
@@ -131,13 +132,14 @@ class ChunkedUploadServiceTest {
         service.abort(session.uploadId());
 
         assertThat(directory).doesNotExist();
-        assertThat(service.findById(session.uploadId())).isEmpty();
+        assertThatThrownBy(() -> service.getById(session.uploadId()))
+                .isInstanceOf(UploadSessionNotFoundException.class);
         assertThat(session.status()).isEqualTo(UploadStatus.ABORTED);
     }
 
     @Test
     void abortRejectsUnknownId() {
         assertThatThrownBy(() -> service.abort(UUID.randomUUID()))
-                .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(UploadSessionNotFoundException.class);
     }
 }

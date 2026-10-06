@@ -50,6 +50,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
+    @ExceptionHandler(StoredFileNotFoundException.class)
+    public ResponseEntity<ApiError> handleStoredFileNotFoundException(
+            StoredFileNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildError(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(UploadSessionNotFoundException.class)
+    public ResponseEntity<ApiError> handleUploadSessionNotFoundException(
+            UploadSessionNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildError(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiError> handleMethodArgumentTypeMismatchException(
             MethodArgumentTypeMismatchException exception,
@@ -88,18 +105,6 @@ public class GlobalExceptionHandler {
     ) {
         return buildError(HttpStatus.UNSUPPORTED_MEDIA_TYPE, exception.getMessage(), request);
     }
-
-    private ResponseEntity<ApiError> buildError(HttpStatus status, String message, HttpServletRequest request) {
-        ApiError body = new ApiError(
-                Instant.now(),
-                status.value(),
-                status.getReasonPhrase(),
-                message,
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(status).body(body);
-    }
-
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleException(
@@ -186,5 +191,17 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+// ---------------------------Helpers---------------------------------------------------
+
+    private ResponseEntity<ApiError> buildError(HttpStatus status, String message, HttpServletRequest request) {
+        ApiError body = new ApiError(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                message,
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(status).body(body);
     }
 }

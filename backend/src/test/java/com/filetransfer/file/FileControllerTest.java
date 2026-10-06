@@ -1,5 +1,7 @@
 package com.filetransfer.file;
 
+import com.filetransfer.error.StoredFileNotFoundException;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
@@ -109,7 +110,7 @@ class FileControllerTest {
                 id, "hello.txt", 5L,
                 Instant.parse("2026-06-01T10:00:00Z"), "text/plain", "uuid.txt");
 
-        when(storageService.findById(id)).thenReturn(Optional.of(metadata));
+        when(storageService.getById(id)).thenReturn(metadata);
         when(storageService.loadAsResource(metadata))
                 .thenReturn(new ByteArrayResource("Hello".getBytes()));
 
@@ -124,7 +125,7 @@ class FileControllerTest {
     @Test
     void returns_404_when_downloading_unknown_id() throws Exception {
         UUID id = UUID.randomUUID();
-        when(storageService.findById(id)).thenReturn(Optional.empty());
+        when(storageService.getById(id)).thenThrow(new StoredFileNotFoundException("File not found: " + id));
 
         mockMvc.perform(get("/api/files/{id}/download", id))
                 .andExpect(status().isNotFound())
