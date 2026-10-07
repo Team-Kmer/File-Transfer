@@ -1,0 +1,145 @@
+package com.filetransfer.file.chunked;
+
+import com.filetransfer.error.EmptyFileException;
+import com.filetransfer.error.FileTooLargeException;
+import com.filetransfer.error.RoomNotFoundException;
+import com.filetransfer.error.UnsupportedFileTypeException;
+import com.filetransfer.error.UploadSessionNotFoundException;
+import com.filetransfer.rooms.RoomService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.util.unit.DataSize;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+class ChunkedUploadServiceTest {
+
+    private static final String ROOM = "123456";
+
+    @TempDir
+    Path tempDir;
+
+    private ChunkedUploadService service;
+
+    @BeforeEach
+    void setUp() {
+        ChunkedUploadProperties properties = new ChunkedUploadProperties(
+                tempDir,
+                DataSize.ofMegabytes(5),
+                DataSize.ofMegabytes(20),
+                List.of("exe", "bat"));
+        RoomService roomService = mock(RoomService.class);
+        when(roomService.exists(ROOM)).thenReturn(true);
+        service = new ChunkedUploadService(properties, roomService, new FileTypeValidator(properties));
+    }
+
+    @Test
+    void initCreatesSessionAndEmptyDirectory() throws IOException {
+        UploadSession session = service.init(
+                new InitUploadRequest("video.mp4", 11L * 1024 * 1024, "video/mp4", ROOM));
+
+        Path directory = tempDir.resolve("tmp").resolve(session.uploadId().toString());
+        assertThat(directory).isDirectory();
+        try (var content = Files.list(directory)) {
+            assertThat(content).isEmpty();
+        }
+        assertThat(session.filename()).isEqualTo("video.mp4");
+        assertThat(session.mimeType()).isEqualTo("video/mp4");
+        assertThat(session.roomCode()).isEqualTo(ROOM);
+        assertThat(session.chunkSize()).isEqualTo(5L * 1024 * 1024);
+        assertThat(session.totalChunks()).isEqualTo(3);
+        assertThat(session.receivedChunks()).isEmpty();
+        assertThat(session.createdAt()).isNotNull();
+        assertThat(session.status()).isEqualTo(UploadStatus.INITIALIZED);
+        assertThat(service.getById(session.uploadId())).isEqualTo(session);
+    }
+
+    @Test
+    void initStripsPathFromFilename() {
+        UploadSession session = service.init(
+                new InitUploadRequest("../../etc/report.pdf", 10L, "application/pdf", ROOM));
+
+        assertThat(session.filename()).isEqualTo("report.pdf");
+    }
+
+    @Test
+    void initDefaultsMissingMimeType() {
+        UploadSession session = service.init(new InitUploadRequest("notes", 10L, null, ROOM));
+
+        assertThat(session.mimeType()).isEqualTo("application/octet-stream");
+    }
+
+    @Test
+    void initRejectsEmptyFile() {
+        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.txt", 0L, "text/plain", ROOM)))
+                .isInstanceOf(EmptyFileException.class);
+    }
+
+    @Test
+    void initRejectsUnknownRoom() {
+        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.txt", 10L, "text/plain", "999999")))
+                .isInstanceOf(RoomNotFoundException.class);
+    }
+
+    @Test
+    void initRejectsFileAboveMaxSize() {
+        long tooLarge = 20L * 1024 * 1024 + 1;
+
+        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.txt", tooLarge, "text/plain", ROOM)))
+                .isInstanceOf(FileTooLargeException.class);
+    }
+
+    @Test
+    void initAcceptsFileExactlyAtMaxSize() {
+        long maxSize = 20L * 1024 * 1024;
+
+        UploadSession session = service.init(new InitUploadRequest("a.txt", maxSize, "text/plain", ROOM));
+
+        assertThat(session.totalChunks()).isEqualTo(4);
+    }
+
+    @Test
+    void initRejectsBlockedExtensionRegardlessOfCase() {
+        assertThatThrownBy(() -> service.init(
+                new InitUploadRequest("setup.EXE", 10L, "application/octet-stream", ROOM)))
+                .isInstanceOf(UnsupportedFileTypeException.class);
+    }
+
+    @Test
+    void initDoesNotCreateDirectoryWhenValidationFails(){
+        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.bat", 10L, null, ROOM)))
+                .isInstanceOf(UnsupportedFileTypeException.class);
+
+        assertThat(tempDir.resolve("tmp")).doesNotExist();
+    }
+
+    @Test
+    void abortRemovesSessionAndDeletesDirectoryWithContent() throws IOException {
+        UploadSession session = service.init(new InitUploadRequest("a.txt", 10L, "text/plain", ROOM));
+        Path directory = tempDir.resolve("tmp").resolve(session.uploadId().toString());
+        Files.writeString(directory.resolve("0.part"), "chunk");
+
+        service.abort(session.uploadId());
+
+        assertThat(directory).doesNotExist();
+        assertThatThrownBy(() -> service.getById(session.uploadId()))
+                .isInstanceOf(UploadSessionNotFoundException.class);
+        assertThat(session.status()).isEqualTo(UploadStatus.ABORTED);
+    }
+
+    @Test
+    void abortRejectsUnknownId() {
+        assertThatThrownBy(() -> service.abort(UUID.randomUUID()))
+                .isInstanceOf(UploadSessionNotFoundException.class);
+    }
+}

@@ -50,6 +50,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
+    @ExceptionHandler(StoredFileNotFoundException.class)
+    public ResponseEntity<ApiError> handleStoredFileNotFoundException(
+            StoredFileNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildError(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(UploadSessionNotFoundException.class)
+    public ResponseEntity<ApiError> handleUploadSessionNotFoundException(
+            UploadSessionNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildError(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiError> handleMethodArgumentTypeMismatchException(
             MethodArgumentTypeMismatchException exception,
@@ -63,6 +80,30 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(EmptyFileException.class)
+    public ResponseEntity<ApiError> handleEmptyFileException(
+            EmptyFileException exception,
+            HttpServletRequest request
+    ) {
+        return buildError(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(FileTooLargeException.class)
+    public ResponseEntity<ApiError> handleFileTooLargeException(
+            FileTooLargeException exception,
+            HttpServletRequest request
+    ) {
+        return buildError(HttpStatus.CONTENT_TOO_LARGE, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(UnsupportedFileTypeException.class)
+    public ResponseEntity<ApiError> handleUnsupportedFileTypeException(
+            UnsupportedFileTypeException exception,
+            HttpServletRequest request
+    ) {
+        return buildError(HttpStatus.UNSUPPORTED_MEDIA_TYPE, exception.getMessage(), request);
     }
 
     @ExceptionHandler(Exception.class)
@@ -150,5 +191,17 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+// ---------------------------Helpers---------------------------------------------------
+
+    private ResponseEntity<ApiError> buildError(HttpStatus status, String message, HttpServletRequest request) {
+        ApiError body = new ApiError(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                message,
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(status).body(body);
     }
 }

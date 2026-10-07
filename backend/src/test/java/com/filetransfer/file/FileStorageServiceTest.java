@@ -1,5 +1,7 @@
 package com.filetransfer.file;
 
+import com.filetransfer.error.StoredFileNotFoundException;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -53,12 +55,13 @@ class FileStorageServiceTest {
     void shouldFindStoredFileById() {
         FileMetadata stored = service.store(textFile("notes.txt", "content"));
 
-        assertThat(service.findById(stored.id())).contains(stored);
+        assertThat(service.getById(stored.id())).isEqualTo(stored);
     }
 
     @Test
-    void shouldReturnEmptyWhenIdDoesNotExist() {
-        assertThat(service.findById(UUID.randomUUID())).isEmpty();
+    void shouldThrowWhenIdDoesNotExist() {
+        assertThatThrownBy(() -> service.getById(UUID.randomUUID()))
+                .isInstanceOf(StoredFileNotFoundException.class);
     }
 
     @Test
@@ -75,21 +78,22 @@ class FileStorageServiceTest {
     }
 
     @Test
-    void shouldDeleteFileAndMetadataAndReturnTrue() {
+    void shouldDeleteFileAndMetadata() {
         FileMetadata metadata = service.store(textFile("notes.txt", "my notes"));
         Path storedFile = storageDirectory.resolve(metadata.storedFilename());
         assertThat(storedFile).exists();
 
-        boolean deleted = service.delete(metadata.id());
+        service.delete(metadata.id());
 
-        assertThat(deleted).isTrue();
         assertThat(storedFile).doesNotExist();
-        assertThat(service.findById(metadata.id())).isEmpty();
+        assertThatThrownBy(() -> service.getById(metadata.id()))
+                .isInstanceOf(StoredFileNotFoundException.class);
     }
 
     @Test
-    void shouldReturnFalseWhenDeletingUnknownId() {
-        assertThat(service.delete(UUID.randomUUID())).isFalse();
+    void shouldThrowWhenDeletingUnknownId() {
+        assertThatThrownBy(() -> service.delete(UUID.randomUUID()))
+                .isInstanceOf(StoredFileNotFoundException.class);
     }
 
     @Test

@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import com.filetransfer.error.ResourceNotFoundException;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -39,8 +38,7 @@ public class FileController {
 
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> download(@PathVariable UUID id) {
-        FileMetadata metadata = storageService.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("File not found: " + id));
+        FileMetadata metadata = storageService.getById(id);
 
         Resource resource = storageService.loadAsResource(metadata);
 
@@ -68,9 +66,7 @@ public class FileController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        if (!storageService.delete(id)) {
-            throw new ResourceNotFoundException("File not found: " + id);
-        }
+        storageService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

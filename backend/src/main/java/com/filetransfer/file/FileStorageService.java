@@ -14,7 +14,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Comparator;
-import java.util.Optional;
+import com.filetransfer.error.StoredFileNotFoundException;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -66,8 +66,12 @@ public class FileStorageService {
         return metadata;
     }
 
-    public Optional<FileMetadata> findById(UUID id) {
-        return Optional.ofNullable(metadataById.get(id));
+    public FileMetadata getById(UUID id) {
+        FileMetadata metadata = metadataById.get(id);
+        if (metadata == null) {
+            throw new StoredFileNotFoundException("File not found: " + id);
+        }
+        return metadata;
     }
 
     public List<FileMetadata> findAll() {
@@ -80,17 +84,16 @@ public class FileStorageService {
                 .toList();
     }
 
-    public boolean delete(UUID id) {
+    public void delete(UUID id) {
         FileMetadata metadata = metadataById.remove(id);
         if (metadata == null) {
-            return false;
+            throw new StoredFileNotFoundException("File not found: " + id);
         }
         try {
             Files.deleteIfExists(storagePath.resolve(metadata.storedFilename()));
         } catch (IOException exception) {
             throw new IllegalStateException("Could not delete file: " + id, exception);
         }
-        return true;
     }
 
     private String resolveOriginalName(MultipartFile file) {
