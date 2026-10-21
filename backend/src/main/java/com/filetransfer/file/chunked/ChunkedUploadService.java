@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
+import java.nio.file.StandardCopyOption;
 
 @Service
 public class ChunkedUploadService {
@@ -126,6 +127,25 @@ public class ChunkedUploadService {
         }
         if (session.receivedChunks().contains(index)) {
             return;
+        }
+
+        Path directory = sessionDirectory(uploadId);
+        Path target = directory.resolve(index + ".part");
+        Path temp = null;
+        try {
+            temp = Files.createTempFile(directory, index + "-", ".tmp");
+            chunk.transferTo(temp);
+            Files.move(temp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException exception) {
+            if (temp != null) {
+                temp.toFile().delete();
+            }
+            throw new IllegalStateException("Could not store chunk " + index + " of upload " + uploadId, exception);
+        }
+
+        session.receivedChunks().add(index);
+        if (session.status() == UploadStatus.INITIALIZED) {
+            session.markReceiving();
         }
     }
 
