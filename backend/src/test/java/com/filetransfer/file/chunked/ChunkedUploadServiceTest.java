@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.util.unit.DataSize;
+import com.filetransfer.error.UploadSessionAbortedException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -124,7 +125,7 @@ class ChunkedUploadServiceTest {
     }
 
     @Test
-    void abortRemovesSessionAndDeletesDirectoryWithContent() throws IOException {
+    void abortMarksSessionAbortedAndDeletesDirectoryWithContent() throws IOException {
         UploadSession session = service.init(new InitUploadRequest("a.txt", 10L, "text/plain", ROOM));
         Path directory = tempDir.resolve("tmp").resolve(session.uploadId().toString());
         Files.writeString(directory.resolve("0.part"), "chunk");
@@ -132,8 +133,8 @@ class ChunkedUploadServiceTest {
         service.abort(session.uploadId());
 
         assertThat(directory).doesNotExist();
-        assertThatThrownBy(() -> service.getById(session.uploadId()))
-                .isInstanceOf(UploadSessionNotFoundException.class);
+        assertThatThrownBy(() -> service.abort(session.uploadId()))
+                .isInstanceOf(UploadSessionAbortedException.class);
         assertThat(session.status()).isEqualTo(UploadStatus.ABORTED);
     }
 
