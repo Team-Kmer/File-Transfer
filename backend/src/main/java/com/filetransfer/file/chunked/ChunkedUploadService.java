@@ -143,6 +143,9 @@ public class ChunkedUploadService {
             throw new IllegalStateException("Could not store chunk " + index + " of upload " + uploadId, exception);
         }
 
+        recordChunk(session, index);
+    }
+    private void recordChunk(UploadSession session, int index) {
         session.receivedChunks().add(index);
         if (session.status() == UploadStatus.INITIALIZED) {
             session.markReceiving();
