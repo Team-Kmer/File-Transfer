@@ -144,7 +144,7 @@ class ChunkedUploadControllerTest {
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(delete("/api/files/upload/{uploadId}", uploadId))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isConflict());
     }
 
     @Test

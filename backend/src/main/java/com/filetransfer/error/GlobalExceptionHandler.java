@@ -67,6 +67,22 @@ public class GlobalExceptionHandler {
     }
 
 
+    @ExceptionHandler(UploadSessionAbortedException.class)
+    public ResponseEntity<ApiError> handleUploadSessionAbortedException(
+            UploadSessionAbortedException exception,
+            HttpServletRequest request
+    ) {
+        return buildError(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(InvalidChunkException.class)
+    public ResponseEntity<ApiError> handleInvalidChunkException(
+            InvalidChunkException exception,
+            HttpServletRequest request
+    ) {
+        return buildError(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiError> handleMethodArgumentTypeMismatchException(
             MethodArgumentTypeMismatchException exception,

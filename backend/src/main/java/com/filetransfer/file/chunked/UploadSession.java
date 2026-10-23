@@ -45,4 +45,8 @@ public class UploadSession {
     void markAborted() {
         this.status = UploadStatus.ABORTED;
     }
+
+    void markReceiving() {
+        this.status = UploadStatus.RECEIVING;
+    }
 }
