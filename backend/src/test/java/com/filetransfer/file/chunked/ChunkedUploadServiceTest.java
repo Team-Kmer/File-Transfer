@@ -5,6 +5,8 @@ import com.filetransfer.error.FileTooLargeException;
 import com.filetransfer.error.RoomNotFoundException;
 import com.filetransfer.error.UnsupportedFileTypeException;
 import com.filetransfer.error.UploadSessionNotFoundException;
+import com.filetransfer.file.FileStorageService;
+import com.filetransfer.file.StorageProperties;
 import com.filetransfer.rooms.RoomService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +42,8 @@ class ChunkedUploadServiceTest {
                 List.of("exe", "bat"));
         RoomService roomService = mock(RoomService.class);
         when(roomService.exists(ROOM)).thenReturn(true);
-        service = new ChunkedUploadService(properties, roomService, new FileTypeValidator(properties));
+        ChunkAssembler assembler = new ChunkAssembler(new FileStorageService(new StorageProperties(tempDir)));
+        service = new ChunkedUploadService(properties, roomService, new FileTypeValidator(properties), assembler);
     }
 
     @Test

@@ -45,4 +45,23 @@ public class UploadSession {
     void markAborted() {
         this.status = UploadStatus.ABORTED;
     }
+
+    synchronized boolean markAssembling() {
+        if (this.status == UploadStatus.ASSEMBLING
+        || this.status == UploadStatus.COMPLETED
+        || this.status == UploadStatus.FAILED
+        || this.status == UploadStatus.ABORTED) {
+            return false;
+        }
+        this.status = UploadStatus.ASSEMBLING;
+        return true;
+    }
+
+    void markCompleted() {
+        this.status = UploadStatus.COMPLETED;
+    }
+
+    void markFailed() {
+        this.status = UploadStatus.FAILED;
+    }
 }
