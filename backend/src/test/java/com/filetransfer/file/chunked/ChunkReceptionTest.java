@@ -1,6 +1,8 @@
 package com.filetransfer.file.chunked;
 
 import com.filetransfer.error.InvalidChunkException;
+import com.filetransfer.file.FileStorageService;
+import com.filetransfer.file.StorageProperties;
 import com.filetransfer.error.UploadStateConflictException;
 import com.filetransfer.rooms.RoomService;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +51,8 @@ class ChunkReceptionTest {
                 List.of("exe"));
         RoomService roomService = mock(RoomService.class);
         when(roomService.exists(ROOM)).thenReturn(true);
-        service = new ChunkedUploadService(properties, roomService, new FileTypeValidator(properties));
+        ChunkAssembler assembler = new ChunkAssembler(new FileStorageService(new StorageProperties(tempDir)));
+        service = new ChunkedUploadService(properties, roomService, new FileTypeValidator(properties), assembler);
         session = service.init(new InitUploadRequest("notes.txt", FILE_SIZE, "text/plain", ROOM, null));
     }
 
