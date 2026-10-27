@@ -2,7 +2,7 @@ package com.filetransfer.file.chunked;
 
 import com.filetransfer.error.FileTooLargeException;
 import com.filetransfer.error.InvalidChunkException;
-import com.filetransfer.error.UploadSessionAbortedException;
+import com.filetransfer.error.UploadStateConflictException;
 import com.filetransfer.rooms.RoomService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -105,7 +105,7 @@ class ChunkReceptionTest {
     void rejectsChunkForAbortedSession() {
         service.abort(session.uploadId());
 
-        assertThatThrownBy(() -> send(0, 10)).isInstanceOf(UploadSessionAbortedException.class);
+        assertThatThrownBy(() -> send(0, 10)).isInstanceOf(UploadStateConflictException.class);
     }
 
     @Test
@@ -133,6 +133,7 @@ class ChunkReceptionTest {
                     .containsExactlyInAnyOrder("0.part", "1.part", "2.part");
         }
     }
+
 
     @Test
     void startupFailsWhenChunkSizeExceedsMultipartLimit() {

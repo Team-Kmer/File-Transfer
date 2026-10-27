@@ -10,7 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.util.unit.DataSize;
-import com.filetransfer.error.UploadSessionAbortedException;
+import com.filetransfer.error.UploadStateConflictException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -134,7 +134,7 @@ class ChunkedUploadServiceTest {
 
         assertThat(directory).doesNotExist();
         assertThatThrownBy(() -> service.abort(session.uploadId()))
-                .isInstanceOf(UploadSessionAbortedException.class);
+                .isInstanceOf(UploadStateConflictException.class);
         assertThat(session.status()).isEqualTo(UploadStatus.ABORTED);
     }
 

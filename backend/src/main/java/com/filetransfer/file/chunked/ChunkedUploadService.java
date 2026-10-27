@@ -9,7 +9,7 @@ import com.filetransfer.rooms.RoomService;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import com.filetransfer.error.InvalidChunkException;
-import com.filetransfer.error.UploadSessionAbortedException;
+import com.filetransfer.error.UploadStateConflictException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -100,7 +100,7 @@ public class ChunkedUploadService {
             throw new UploadSessionNotFoundException("Upload session not found: " + uploadId);
         }
         if (session.status() == UploadStatus.ABORTED) {
-            throw new UploadSessionAbortedException("Upload session is aborted: " + uploadId);
+            throw new UploadStateConflictException("Upload session is aborted: " + uploadId);
         }
         session.markAborted();
         deleteRecursively(sessionDirectory(uploadId));
@@ -109,7 +109,7 @@ public class ChunkedUploadService {
     public void receiveChunk(UUID uploadId, int index, MultipartFile chunk) {
         UploadSession session = getById(uploadId);
         if (session.status() == UploadStatus.ABORTED) {
-            throw new UploadSessionAbortedException("Upload session is aborted: " + uploadId);
+            throw new UploadStateConflictException("Upload session is aborted: " + uploadId);
         }
         if (index < 0 || index >= session.totalChunks()) {
             throw new InvalidChunkException("Chunk index " + index + " is out of range [0, " + session.totalChunks() + ")");

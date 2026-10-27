@@ -69,9 +69,9 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ExceptionHandler(UploadSessionAbortedException.class)
-    public ResponseEntity<ApiError> handleUploadSessionAbortedException(
-            UploadSessionAbortedException exception,
+    @ExceptionHandler(UploadStateConflictException.class)
+    public ResponseEntity<ApiError> handleUploadStateConflictException(
+            UploadStateConflictException exception,
             HttpServletRequest request
     ) {
         return buildError(HttpStatus.CONFLICT, exception.getMessage(), request);
