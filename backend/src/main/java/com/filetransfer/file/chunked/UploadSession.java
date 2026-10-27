@@ -47,8 +47,8 @@ public class UploadSession {
         this.status = UploadStatus.ABORTED;
     }
 
-    void markReceiving() {
-        this.status = UploadStatus.RECEIVING;
+    void markInProgress() {
+        this.status = UploadStatus.IN_PROGRESS;
     }
 
     boolean claimChunk(int index) {

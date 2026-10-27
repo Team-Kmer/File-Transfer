@@ -2,6 +2,7 @@ package com.filetransfer.file.chunked;
 
 public enum UploadStatus {
     INITIALIZED,
-    RECEIVING,
+    IN_PROGRESS,
+    COMPLETED,
     ABORTED
 }

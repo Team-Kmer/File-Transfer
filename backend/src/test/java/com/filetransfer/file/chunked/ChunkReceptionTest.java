@@ -64,12 +64,12 @@ class ChunkReceptionTest {
     }
 
     @Test
-    void firstChunkMovesSessionToReceiving() {
+    void firstChunkMovesSessionToIN_PROGRESS() {
         assertThat(session.status()).isEqualTo(UploadStatus.INITIALIZED);
 
         send(1, 10);
 
-        assertThat(session.status()).isEqualTo(UploadStatus.RECEIVING);
+        assertThat(session.status()).isEqualTo(UploadStatus.IN_PROGRESS);
     }
 
     @Test
@@ -127,7 +127,7 @@ class ChunkReceptionTest {
         }
 
         assertThat(session.receivedChunks()).containsExactlyInAnyOrder(0, 1, 2);
-        assertThat(session.status()).isEqualTo(UploadStatus.RECEIVING);
+        assertThat(session.status()).isEqualTo(UploadStatus.IN_PROGRESS);
         try (var files = Files.list(service.sessionDirectory(session.uploadId()))) {
             assertThat(files.map(path -> path.getFileName().toString()))
                     .containsExactlyInAnyOrder("0.part", "1.part", "2.part");

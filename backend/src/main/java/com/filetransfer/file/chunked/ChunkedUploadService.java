@@ -158,7 +158,7 @@ public class ChunkedUploadService {
     private void recordChunk(UploadSession session, int index) {
         session.receivedChunks().add(index);
         if (session.status() == UploadStatus.INITIALIZED) {
-            session.markReceiving();
+            session.markInProgress();
         }
     }
 
