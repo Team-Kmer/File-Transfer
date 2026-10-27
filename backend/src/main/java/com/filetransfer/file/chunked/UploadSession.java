@@ -15,6 +15,7 @@ public class UploadSession {
     private final long chunkSize;
     private final int totalChunks;
     private final Set<Integer> receivedChunks = ConcurrentHashMap.newKeySet();
+    private final Set<Integer> chunksInProgress = ConcurrentHashMap.newKeySet();
     private final Instant createdAt;
     private volatile UploadStatus status;
 
@@ -48,5 +49,13 @@ public class UploadSession {
 
     void markReceiving() {
         this.status = UploadStatus.RECEIVING;
+    }
+
+    boolean claimChunk(int index) {
+        return chunksInProgress.add(index);
+    }
+
+    void releaseChunk(int index) {
+        chunksInProgress.remove(index);
     }
 }

@@ -125,10 +125,21 @@ public class ChunkedUploadService {
         if (actualSize != expectedSize) {
             throw new InvalidChunkException("Chunk " + index + " has wrong size: " + actualSize + " bytes, expected " + expectedSize);
         }
-        if (session.receivedChunks().contains(index)) {
+        if (!session.claimChunk(index)) {
             return;
         }
+        try {
+            if (session.receivedChunks().contains(index)) {
+                return;
+            }
+            storeChunk(uploadId, index, chunk);
+            recordChunk(session, index);
+        } finally {
+            session.releaseChunk(index);
+        }
+    }
 
+    private void storeChunk(UUID uploadId, int index, MultipartFile chunk) {
         Path directory = sessionDirectory(uploadId);
         Path target = directory.resolve(index + ".part");
         Path temp = null;
@@ -142,9 +153,8 @@ public class ChunkedUploadService {
             }
             throw new IllegalStateException("Could not store chunk " + index + " of upload " + uploadId, exception);
         }
-
-        recordChunk(session, index);
     }
+
     private void recordChunk(UploadSession session, int index) {
         session.receivedChunks().add(index);
         if (session.status() == UploadStatus.INITIALIZED) {
