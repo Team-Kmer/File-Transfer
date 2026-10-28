@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.util.unit.DataSize;
+import com.filetransfer.error.UploadSessionNotFoundException;
+import java.util.UUID;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -160,6 +162,11 @@ class ChunkReceptionTest {
             assertThat(files.map(path -> path.getFileName().toString()))
                     .containsExactlyInAnyOrder("0.part", "1.part");
         }
+    }
+    @Test
+    void rejectsChunkForUnknownUpload() {
+        assertThatThrownBy(() -> service.receiveChunk(UUID.randomUUID(), 0, chunk(10, (byte) 'x')))
+                .isInstanceOf(UploadSessionNotFoundException.class);
     }
 
     private void send(int index, int size) {
