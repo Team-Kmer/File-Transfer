@@ -1,16 +1,16 @@
 package com.filetransfer.file.chunked;
 
-import com.filetransfer.error.FileTooLargeException;
 import com.filetransfer.error.InvalidChunkException;
 import com.filetransfer.error.UploadStateConflictException;
 import com.filetransfer.rooms.RoomService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.util.unit.DataSize;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -52,7 +52,7 @@ class ChunkReceptionTest {
     }
 
     @Test
-    void storesChunksReceivedOutOfOrder() {
+    void storesChunksReceivedOutOfOrderAndCompletesUpload() {
         send(2, 5);
         send(0, 10);
         send(1, 10);
@@ -61,10 +61,11 @@ class ChunkReceptionTest {
         assertThat(part(0)).exists();
         assertThat(part(1)).exists();
         assertThat(part(2)).exists();
+        assertThat(session.status()).isEqualTo(UploadStatus.COMPLETED);
     }
 
     @Test
-    void firstChunkMovesSessionToIN_PROGRESS() {
+    void firstChunkMovesSessionToInProgress() {
         assertThat(session.status()).isEqualTo(UploadStatus.INITIALIZED);
 
         send(1, 10);
@@ -89,23 +90,51 @@ class ChunkReceptionTest {
     }
 
     @Test
-    void rejectsLargerChunkAsTooLarge() {
-        assertThatThrownBy(() -> send(0, 11)).isInstanceOf(FileTooLargeException.class);
-        assertThatThrownBy(() -> send(2, 10)).isInstanceOf(FileTooLargeException.class);
+    void rejectsLargerChunk() {
+        assertThatThrownBy(() -> send(0, 11)).isInstanceOf(InvalidChunkException.class);
+        assertThatThrownBy(() -> send(2, 10)).isInstanceOf(InvalidChunkException.class);
+        assertThat(part(0)).doesNotExist();
+        assertThat(part(2)).doesNotExist();
     }
 
     @Test
-    void rejectsSmallerChunkAsInvalid() {
+    void stopsReadingOversizedBodyAfterChunkSizePlusOne() {
+        CountingInputStream hugeBody = new CountingInputStream(1_000_000);
+
+        assertThatThrownBy(() -> service.receiveChunk(session.uploadId(), 0, hugeBody))
+                .isInstanceOf(InvalidChunkException.class);
+        assertThat(hugeBody.bytesRead).isLessThanOrEqualTo(CHUNK_SIZE + 1);
+    }
+
+    @Test
+    void rejectsSmallerChunk() {
         assertThatThrownBy(() -> send(0, 9)).isInstanceOf(InvalidChunkException.class);
         assertThatThrownBy(() -> send(2, 4)).isInstanceOf(InvalidChunkException.class);
         assertThat(part(0)).doesNotExist();
     }
 
     @Test
-    void rejectsChunkForAbortedSession() {
+    void rejectsChunkForAbortedUpload() {
         service.abort(session.uploadId());
 
         assertThatThrownBy(() -> send(0, 10)).isInstanceOf(UploadStateConflictException.class);
+    }
+
+    @Test
+    void rejectsChunkForCompletedUpload() {
+        send(0, 10);
+        send(1, 10);
+        send(2, 5);
+
+        assertThatThrownBy(() -> send(0, 10)).isInstanceOf(UploadStateConflictException.class);
+    }
+
+    @Test
+    void keepsDeviceIdFromInitRequest() {
+        UploadSession withDevice = service.init(
+                new InitUploadRequest("photo.jpg", 5L, "image/jpeg", ROOM, "device-1"));
+
+        assertThat(withDevice.deviceId()).isEqualTo("device-1");
     }
 
     @Test
@@ -114,7 +143,6 @@ class ChunkReceptionTest {
         for (int round = 0; round < 5; round++) {
             tasks.add(() -> { send(0, 10); return null; });
             tasks.add(() -> { send(1, 10); return null; });
-            tasks.add(() -> { send(2, 5); return null; });
         }
 
         ExecutorService pool = Executors.newFixedThreadPool(8);
@@ -126,36 +154,43 @@ class ChunkReceptionTest {
             pool.shutdown();
         }
 
-        assertThat(session.receivedChunks()).containsExactlyInAnyOrder(0, 1, 2);
+        assertThat(session.receivedChunks()).containsExactlyInAnyOrder(0, 1);
         assertThat(session.status()).isEqualTo(UploadStatus.IN_PROGRESS);
         try (var files = Files.list(service.sessionDirectory(session.uploadId()))) {
             assertThat(files.map(path -> path.getFileName().toString()))
-                    .containsExactlyInAnyOrder("0.part", "1.part", "2.part");
+                    .containsExactlyInAnyOrder("0.part", "1.part");
         }
-    }
-
-
-    @Test
-    void startupFailsWhenChunkSizeExceedsMultipartLimit() {
-        ChunkedUploadProperties properties = new ChunkedUploadProperties(
-                tempDir, DataSize.ofMegabytes(20), DataSize.ofGigabytes(2), List.of("exe"));
-
-        assertThatThrownBy(() -> new ChunkSizeStartupCheck(properties, DataSize.ofMegabytes(10)))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("app.storage.chunk-size");
     }
 
     private void send(int index, int size) {
         service.receiveChunk(session.uploadId(), index, chunk(size, (byte) 'x'));
     }
 
-    private MockMultipartFile chunk(int size, byte content) {
+    private InputStream chunk(int size, byte content) {
         byte[] bytes = new byte[size];
         Arrays.fill(bytes, content);
-        return new MockMultipartFile("chunk", bytes);
+        return new ByteArrayInputStream(bytes);
     }
 
     private Path part(int index) {
         return service.sessionDirectory(session.uploadId()).resolve(index + ".part");
+    }
+
+    private static final class CountingInputStream extends InputStream {
+        private final long size;
+        private long bytesRead;
+
+        CountingInputStream(long size) {
+            this.size = size;
+        }
+
+        @Override
+        public int read() {
+            if (bytesRead >= size) {
+                return -1;
+            }
+            bytesRead++;
+            return 'x';
+        }
     }
 }

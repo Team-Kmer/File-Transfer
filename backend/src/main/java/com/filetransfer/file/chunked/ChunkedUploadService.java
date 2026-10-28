@@ -2,26 +2,27 @@ package com.filetransfer.file.chunked;
 
 import com.filetransfer.error.EmptyFileException;
 import com.filetransfer.error.FileTooLargeException;
+import com.filetransfer.error.InvalidChunkException;
 import com.filetransfer.error.RoomNotFoundException;
 import com.filetransfer.error.UnsupportedFileTypeException;
 import com.filetransfer.error.UploadSessionNotFoundException;
+import com.filetransfer.error.UploadStateConflictException;
 import com.filetransfer.rooms.RoomService;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
-import com.filetransfer.error.InvalidChunkException;
-import com.filetransfer.error.UploadStateConflictException;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
-import java.nio.file.StandardCopyOption;
 
 @Service
 public class ChunkedUploadService {
@@ -107,10 +108,11 @@ public class ChunkedUploadService {
         deleteRecursively(sessionDirectory(uploadId));
     }
 
-    public void receiveChunk(UUID uploadId, int index, MultipartFile chunk) {
+    public void receiveChunk(UUID uploadId, int index, InputStream body) {
         UploadSession session = getById(uploadId);
-        if (session.status() == UploadStatus.ABORTED) {
-            throw new UploadStateConflictException("Upload session is aborted: " + uploadId);
+        if (session.status() == UploadStatus.ABORTED || session.status() == UploadStatus.COMPLETED) {
+            throw new UploadStateConflictException(
+                    "Upload " + uploadId + " is " + session.status() + ", no more chunks accepted");
         }
         if (index < 0 || index >= session.totalChunks()) {
             throw new InvalidChunkException("Chunk index " + index + " is out of range [0, " + session.totalChunks() + ")");
@@ -119,13 +121,6 @@ public class ChunkedUploadService {
         if (index == session.totalChunks() - 1) {
             expectedSize = session.sizeBytes() - (long) (session.totalChunks() - 1) * session.chunkSize();
         }
-        long actualSize = chunk.getSize();
-        if (actualSize > expectedSize) {
-            throw new FileTooLargeException("Chunk " + index + " is too large: " + actualSize + " bytes, expected " + expectedSize);
-        }
-        if (actualSize != expectedSize) {
-            throw new InvalidChunkException("Chunk " + index + " has wrong size: " + actualSize + " bytes, expected " + expectedSize);
-        }
         if (!session.claimChunk(index)) {
             return;
         }
@@ -133,20 +128,28 @@ public class ChunkedUploadService {
             if (session.receivedChunks().contains(index)) {
                 return;
             }
-            storeChunk(uploadId, index, chunk);
+            storeChunk(uploadId, index, body, expectedSize);
             recordChunk(session, index);
         } finally {
             session.releaseChunk(index);
         }
     }
 
-    private void storeChunk(UUID uploadId, int index, MultipartFile chunk) {
+    private void storeChunk(UUID uploadId, int index, InputStream body, long expectedSize) {
         Path directory = sessionDirectory(uploadId);
         Path target = directory.resolve(index + ".part");
         Path temp = null;
         try {
             temp = Files.createTempFile(directory, index + "-", ".tmp");
-            chunk.transferTo(temp);
+            long written = copyAtMost(body, temp, expectedSize + 1);
+            if (written > expectedSize) {
+                Files.deleteIfExists(temp);
+                throw new InvalidChunkException("Chunk " + index + " is too large: expected " + expectedSize + " bytes");
+            }
+            if (written != expectedSize) {
+                Files.deleteIfExists(temp);
+                throw new InvalidChunkException("Chunk " + index + " has wrong size: " + written + " bytes, expected " + expectedSize);
+            }
             Files.move(temp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException exception) {
             if (temp != null) {
@@ -156,10 +159,30 @@ public class ChunkedUploadService {
         }
     }
 
+    private long copyAtMost(InputStream body, Path target, long limit) throws IOException {
+        byte[] buffer = new byte[8192];
+        long total = 0;
+        try (OutputStream out = Files.newOutputStream(target)) {
+            while (total < limit) {
+                int read = body.read(buffer, 0, (int) Math.min(buffer.length, limit - total));
+                if (read == -1) {
+                    break;
+                }
+                out.write(buffer, 0, read);
+                total += read;
+            }
+        }
+        return total;
+    }
+
     private void recordChunk(UploadSession session, int index) {
-        session.receivedChunks().add(index);
-        if (session.status() == UploadStatus.INITIALIZED) {
-            session.markInProgress();
+        synchronized (session) {
+            session.receivedChunks().add(index);
+            if (session.receivedChunks().size() == session.totalChunks()) {
+                session.markCompleted();
+            } else if (session.status() == UploadStatus.INITIALIZED) {
+                session.markInProgress();
+            }
         }
     }
 

@@ -53,7 +53,9 @@ public class UploadSession {
     void markInProgress() {
         this.status = UploadStatus.IN_PROGRESS;
     }
-
+    void markCompleted() {
+        this.status = UploadStatus.COMPLETED;
+    }
     boolean claimChunk(int index) {
         return chunksInProgress.add(index);
     }
