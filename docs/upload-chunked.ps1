@@ -1,4 +1,4 @@
-# Manual test for FT-41: init, chunks, status.
+# Manual test for FT-41: init, raw chunks, status, resume.
 # Usage: powershell -ExecutionPolicy Bypass -File .\docs\upload-chunked.ps1 -File .\docs\demo.mp4 -Skip 1
 param(
     [Parameter(Mandatory = $true)] [string] $File,
@@ -12,9 +12,14 @@ $baseUrl = "http://localhost:8080"
 $api = "$baseUrl/api/files/upload"
 $fileInfo = Get-Item -LiteralPath $File
 
+function Get-Missing($status) {
+    $received = @($status.receivedIndexes)
+    @(0..($status.totalChunks - 1) | Where-Object { $received -notcontains $_ })
+}
+
 function Show-Status($status) {
-    Write-Host ("Status: {0} | received {1}/{2} ({3}%) | missing: [{4}]" -f `
-        $status.status, $status.received, $status.totalChunks, $status.percent, (@($status.missing) -join ", "))
+    Write-Host ("Status: {0} | received [{1}] of {2} | missing: [{3}]" -f `
+        $status.status, (@($status.receivedIndexes) -join ", "), $status.totalChunks, ((Get-Missing $status) -join ", "))
 }
 
 function Send-Chunk([int] $index) {
@@ -26,18 +31,16 @@ function Send-Chunk([int] $index) {
         $read += $count
     }
 
-    $form = [System.Net.Http.MultipartFormDataContent]::new()
-    $form.Add([System.Net.Http.StringContent]::new("$uploadId"), "uploadId")
-    $form.Add([System.Net.Http.StringContent]::new("$index"), "index")
-    $form.Add([System.Net.Http.ByteArrayContent]::new($buffer, 0, $read), "chunk", "$index.part")
+    $content = [System.Net.Http.ByteArrayContent]::new($buffer, 0, $read)
+    $content.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::new("application/octet-stream")
 
-    $response = $client.PostAsync("$api/chunk", $form).Result
+    $response = $client.PutAsync("$api/$uploadId/chunks/$index", $content).Result
     $body = $response.Content.ReadAsStringAsync().Result
     if (-not $response.IsSuccessStatusCode) {
         throw "Chunk $index rejected with HTTP $([int] $response.StatusCode): $body"
     }
-    $status = $body | ConvertFrom-Json
-    Write-Host ("Chunk {0} sent -> {1}/{2} ({3}%)" -f $index, $status.received, $status.totalChunks, $status.percent)
+    $result = $body | ConvertFrom-Json
+    Write-Host ("Chunk {0} sent -> {1}/{2} received, status {3}" -f $index, $result.receivedChunks, $result.totalChunks, $result.status)
 }
 
 # An upload always belongs to a room
@@ -68,8 +71,8 @@ try {
     $status = Invoke-RestMethod -Method Get -Uri "$api/$uploadId"
     Show-Status $status
 
-    # Resume: send only what the server reports as missing
-    foreach ($index in @($status.missing)) {
+    # Resume: send only the indexes the server has not received
+    foreach ($index in (Get-Missing $status)) {
         Send-Chunk $index
     }
     Show-Status (Invoke-RestMethod -Method Get -Uri "$api/$uploadId")
