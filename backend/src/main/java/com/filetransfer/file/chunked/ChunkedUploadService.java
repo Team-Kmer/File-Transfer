@@ -2,16 +2,21 @@ package com.filetransfer.file.chunked;
 
 import com.filetransfer.error.EmptyFileException;
 import com.filetransfer.error.FileTooLargeException;
+import com.filetransfer.error.InvalidChunkException;
 import com.filetransfer.error.RoomNotFoundException;
 import com.filetransfer.error.UnsupportedFileTypeException;
 import com.filetransfer.error.UploadSessionNotFoundException;
+import com.filetransfer.error.UploadStateConflictException;
 import com.filetransfer.rooms.RoomService;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Map;
@@ -68,6 +73,7 @@ public class ChunkedUploadService {
                 request.sizeBytes(),
                 mimeType,
                 request.roomCode(),
+                request.deviceId(),
                 chunkSize,
                 ChunkCalculator.totalChunks(request.sizeBytes(), chunkSize),
                 Instant.now());
@@ -91,12 +97,93 @@ public class ChunkedUploadService {
     }
 
     public void abort(UUID uploadId) {
-        UploadSession session = sessionsById.remove(uploadId);
+        UploadSession session = sessionsById.get(uploadId);
         if (session == null) {
             throw new UploadSessionNotFoundException("Upload session not found: " + uploadId);
         }
+        if (session.status() == UploadStatus.ABORTED) {
+            throw new UploadStateConflictException("Upload session is aborted: " + uploadId);
+        }
         session.markAborted();
         deleteRecursively(sessionDirectory(uploadId));
+    }
+
+    public void receiveChunk(UUID uploadId, int index, InputStream body) {
+        UploadSession session = getById(uploadId);
+        if (session.status() == UploadStatus.ABORTED || session.status() == UploadStatus.COMPLETED) {
+            throw new UploadStateConflictException(
+                    "Upload " + uploadId + " is " + session.status() + ", no more chunks accepted");
+        }
+        if (index < 0 || index >= session.totalChunks()) {
+            throw new InvalidChunkException("Chunk index " + index + " is out of range [0, " + session.totalChunks() + ")");
+        }
+        long expectedSize = session.chunkSize();
+        if (index == session.totalChunks() - 1) {
+            expectedSize = session.sizeBytes() - (long) (session.totalChunks() - 1) * session.chunkSize();
+        }
+        if (!session.claimChunk(index)) {
+            return;
+        }
+        try {
+            if (session.receivedChunks().contains(index)) {
+                return;
+            }
+            storeChunk(uploadId, index, body, expectedSize);
+            recordChunk(session, index);
+        } finally {
+            session.releaseChunk(index);
+        }
+    }
+
+    private void storeChunk(UUID uploadId, int index, InputStream body, long expectedSize) {
+        Path directory = sessionDirectory(uploadId);
+        Path target = directory.resolve(index + ".part");
+        Path temp = null;
+        try {
+            temp = Files.createTempFile(directory, index + "-", ".tmp");
+            long written = copyAtMost(body, temp, expectedSize + 1);
+            if (written > expectedSize) {
+                Files.deleteIfExists(temp);
+                throw new InvalidChunkException("Chunk " + index + " is too large: expected " + expectedSize + " bytes");
+            }
+            if (written != expectedSize) {
+                Files.deleteIfExists(temp);
+                throw new InvalidChunkException("Chunk " + index + " has wrong size: " + written + " bytes, expected " + expectedSize);
+            }
+            Files.move(temp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException exception) {
+            if (temp != null) {
+                temp.toFile().delete();
+            }
+            throw new IllegalStateException("Could not store chunk " + index + " of upload " + uploadId, exception);
+        }
+    }
+
+    private long copyAtMost(InputStream body, Path target, long limit) throws IOException {
+        byte[] buffer = new byte[8192];
+        long total = 0;
+        try (OutputStream out = Files.newOutputStream(target)) {
+            while (total < limit) {
+                int read = body.read(buffer, 0, (int) Math.min(buffer.length, limit - total));
+                if (read == -1) {
+                    break;
+                }
+                out.write(buffer, 0, read);
+                total += read;
+            }
+        }
+        return total;
+    }
+
+    private void recordChunk(UploadSession session, int index) {
+        synchronized (session) {
+            session.receivedChunks().add(index);
+            if (session.receivedChunks().size() == session.totalChunks()) {
+                session.markCompleted();
+            } else if (session.status() == UploadStatus.INITIALIZED) {
+                session.markInProgress();
+            }
+        }
     }
 
     Path sessionDirectory(UUID uploadId) {

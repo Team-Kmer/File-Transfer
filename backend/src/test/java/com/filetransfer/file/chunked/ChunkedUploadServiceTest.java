@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.util.unit.DataSize;
+import com.filetransfer.error.UploadStateConflictException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,7 +47,7 @@ class ChunkedUploadServiceTest {
     @Test
     void initCreatesSessionAndEmptyDirectory() throws IOException {
         UploadSession session = service.init(
-                new InitUploadRequest("video.mp4", 11L * 1024 * 1024, "video/mp4", ROOM));
+                new InitUploadRequest("video.mp4", 11L * 1024 * 1024, "video/mp4", ROOM, null));
 
         Path directory = tempDir.resolve("tmp").resolve(session.uploadId().toString());
         assertThat(directory).isDirectory();
@@ -67,27 +68,27 @@ class ChunkedUploadServiceTest {
     @Test
     void initStripsPathFromFilename() {
         UploadSession session = service.init(
-                new InitUploadRequest("../../etc/report.pdf", 10L, "application/pdf", ROOM));
+                new InitUploadRequest("../../etc/report.pdf", 10L, "application/pdf", ROOM, null));
 
         assertThat(session.filename()).isEqualTo("report.pdf");
     }
 
     @Test
     void initDefaultsMissingMimeType() {
-        UploadSession session = service.init(new InitUploadRequest("notes", 10L, null, ROOM));
+        UploadSession session = service.init(new InitUploadRequest("notes", 10L, null, ROOM, null));
 
         assertThat(session.mimeType()).isEqualTo("application/octet-stream");
     }
 
     @Test
     void initRejectsEmptyFile() {
-        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.txt", 0L, "text/plain", ROOM)))
+        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.txt", 0L, "text/plain", ROOM, null)))
                 .isInstanceOf(EmptyFileException.class);
     }
 
     @Test
     void initRejectsUnknownRoom() {
-        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.txt", 10L, "text/plain", "999999")))
+        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.txt", 10L, "text/plain", "999999", null)))
                 .isInstanceOf(RoomNotFoundException.class);
     }
 
@@ -95,7 +96,7 @@ class ChunkedUploadServiceTest {
     void initRejectsFileAboveMaxSize() {
         long tooLarge = 20L * 1024 * 1024 + 1;
 
-        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.txt", tooLarge, "text/plain", ROOM)))
+        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.txt", tooLarge, "text/plain", ROOM, null)))
                 .isInstanceOf(FileTooLargeException.class);
     }
 
@@ -103,7 +104,7 @@ class ChunkedUploadServiceTest {
     void initAcceptsFileExactlyAtMaxSize() {
         long maxSize = 20L * 1024 * 1024;
 
-        UploadSession session = service.init(new InitUploadRequest("a.txt", maxSize, "text/plain", ROOM));
+        UploadSession session = service.init(new InitUploadRequest("a.txt", maxSize, "text/plain", ROOM, null));
 
         assertThat(session.totalChunks()).isEqualTo(4);
     }
@@ -111,29 +112,29 @@ class ChunkedUploadServiceTest {
     @Test
     void initRejectsBlockedExtensionRegardlessOfCase() {
         assertThatThrownBy(() -> service.init(
-                new InitUploadRequest("setup.EXE", 10L, "application/octet-stream", ROOM)))
+                new InitUploadRequest("setup.EXE", 10L, "application/octet-stream", ROOM, null)))
                 .isInstanceOf(UnsupportedFileTypeException.class);
     }
 
     @Test
     void initDoesNotCreateDirectoryWhenValidationFails(){
-        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.bat", 10L, null, ROOM)))
+        assertThatThrownBy(() -> service.init(new InitUploadRequest("a.bat", 10L, null, ROOM, null)))
                 .isInstanceOf(UnsupportedFileTypeException.class);
 
         assertThat(tempDir.resolve("tmp")).doesNotExist();
     }
 
     @Test
-    void abortRemovesSessionAndDeletesDirectoryWithContent() throws IOException {
-        UploadSession session = service.init(new InitUploadRequest("a.txt", 10L, "text/plain", ROOM));
+    void abortMarksSessionAbortedAndDeletesDirectoryWithContent() throws IOException {
+        UploadSession session = service.init(new InitUploadRequest("a.txt", 10L, "text/plain", ROOM, null));
         Path directory = tempDir.resolve("tmp").resolve(session.uploadId().toString());
         Files.writeString(directory.resolve("0.part"), "chunk");
 
         service.abort(session.uploadId());
 
         assertThat(directory).doesNotExist();
-        assertThatThrownBy(() -> service.getById(session.uploadId()))
-                .isInstanceOf(UploadSessionNotFoundException.class);
+        assertThatThrownBy(() -> service.abort(session.uploadId()))
+                .isInstanceOf(UploadStateConflictException.class);
         assertThat(session.status()).isEqualTo(UploadStatus.ABORTED);
     }
 
