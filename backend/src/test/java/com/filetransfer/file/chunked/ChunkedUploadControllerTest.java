@@ -12,6 +12,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
+import static org.hamcrest.Matchers.contains;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 import java.util.UUID;
 
@@ -158,5 +162,135 @@ class ChunkedUploadControllerTest {
     void returns_400_when_abort_id_is_not_a_uuid() throws Exception {
         mockMvc.perform(delete("/api/files/upload/{uploadId}", "not-a-uuid"))
                 .andExpect(status().isBadRequest());
+    }
+    private String initUpload(long sizeBytes) throws Exception {
+        MvcResult result = init(body("video.mp4", sizeBytes, ROOM));
+        return JsonPath.read(result.getResponse().getContentAsString(), "$.uploadId");
+    }
+
+    private ResultActions sendChunk(String uploadId, Object index, int size) throws Exception {
+        return mockMvc.perform(put("/api/files/upload/{uploadId}/chunks/{index}", uploadId, index)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .content(new byte[size]));
+    }
+
+    @Test
+    void put_chunk_returns_200_with_progress() throws Exception {
+        String uploadId = initUpload(FIVE_MB + 10);
+
+        sendChunk(uploadId, 1, 10)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.uploadId").value(uploadId))
+                .andExpect(jsonPath("$.index").value(1))
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.receivedChunks").value(1))
+                .andExpect(jsonPath("$.totalChunks").value(2))
+                .andExpect(jsonPath("$.fileId").doesNotExist());
+    }
+
+    @Test
+    void put_last_chunk_completes_upload() throws Exception {
+        String uploadId = initUpload(FIVE_MB + 10);
+        sendChunk(uploadId, 1, 10).andExpect(status().isOk());
+
+        sendChunk(uploadId, 0, (int) FIVE_MB)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.receivedChunks").value(2));
+    }
+
+    @Test
+    void put_duplicate_chunk_returns_200_and_is_counted_once() throws Exception {
+        String uploadId = initUpload(FIVE_MB + 10);
+        sendChunk(uploadId, 1, 10).andExpect(status().isOk());
+
+        sendChunk(uploadId, 1, 10)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.receivedChunks").value(1));
+    }
+
+    @Test
+    void put_returns_400_when_index_is_out_of_range() throws Exception {
+        String uploadId = initUpload(FIVE_MB + 10);
+
+        sendChunk(uploadId, 2, 10)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("out of range")));
+    }
+
+    @Test
+    void put_returns_400_when_chunk_is_too_small() throws Exception {
+        String uploadId = initUpload(FIVE_MB + 10);
+
+        sendChunk(uploadId, 1, 9)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("wrong size")));
+    }
+
+    @Test
+    void put_returns_400_when_chunk_is_too_large() throws Exception {
+        String uploadId = initUpload(FIVE_MB + 10);
+
+        sendChunk(uploadId, 1, 11)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("too large")));
+    }
+
+    @Test
+    void put_returns_400_when_index_is_not_a_number() throws Exception {
+        String uploadId = initUpload(FIVE_MB + 10);
+
+        sendChunk(uploadId, "abc", 10)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid value 'abc' for parameter 'index'"));
+    }
+
+    @Test
+    void put_returns_404_when_upload_is_unknown() throws Exception {
+        sendChunk(UUID.randomUUID().toString(), 0, 10)
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void put_returns_409_when_upload_is_aborted() throws Exception {
+        String uploadId = initUpload(FIVE_MB + 10);
+        mockMvc.perform(delete("/api/files/upload/{uploadId}", uploadId))
+                .andExpect(status().isNoContent());
+
+        sendChunk(uploadId, 1, 10)
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void put_returns_409_when_upload_is_completed() throws Exception {
+        String uploadId = initUpload(100);
+        sendChunk(uploadId, 0, 100)
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+
+        sendChunk(uploadId, 0, 100)
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void get_status_returns_received_indexes() throws Exception {
+        String uploadId = initUpload(FIVE_MB + 10);
+        sendChunk(uploadId, 1, 10).andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/files/upload/{uploadId}", uploadId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.uploadId").value(uploadId))
+                .andExpect(jsonPath("$.filename").value("video.mp4"))
+                .andExpect(jsonPath("$.sizeBytes").value(FIVE_MB + 10))
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.chunkSize").value(FIVE_MB))
+                .andExpect(jsonPath("$.totalChunks").value(2))
+                .andExpect(jsonPath("$.receivedIndexes").value(contains(1)))
+                .andExpect(jsonPath("$.fileId").doesNotExist());
+    }
+
+    @Test
+    void get_status_returns_404_when_upload_is_unknown() throws Exception {
+        mockMvc.perform(get("/api/files/upload/{uploadId}", UUID.randomUUID()))
+                .andExpect(status().isNotFound());
     }
 }
