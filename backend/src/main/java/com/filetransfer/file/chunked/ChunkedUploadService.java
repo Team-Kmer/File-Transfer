@@ -72,6 +72,7 @@ public class ChunkedUploadService {
                 request.sizeBytes(),
                 mimeType,
                 request.roomCode(),
+                request.deviceId(),
                 chunkSize,
                 ChunkCalculator.totalChunks(request.sizeBytes(), chunkSize),
                 Instant.now());

@@ -48,7 +48,7 @@ class ChunkReceptionTest {
         RoomService roomService = mock(RoomService.class);
         when(roomService.exists(ROOM)).thenReturn(true);
         service = new ChunkedUploadService(properties, roomService, new FileTypeValidator(properties));
-        session = service.init(new InitUploadRequest("notes.txt", FILE_SIZE, "text/plain", ROOM));
+        session = service.init(new InitUploadRequest("notes.txt", FILE_SIZE, "text/plain", ROOM, null));
     }
 
     @Test

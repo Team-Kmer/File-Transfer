@@ -12,6 +12,7 @@ public class UploadSession {
     private final long sizeBytes;
     private final String mimeType;
     private final String roomCode;
+    private final String deviceId;
     private final long chunkSize;
     private final int totalChunks;
     private final Set<Integer> receivedChunks = ConcurrentHashMap.newKeySet();
@@ -20,12 +21,13 @@ public class UploadSession {
     private volatile UploadStatus status;
 
     public UploadSession(UUID uploadId, String filename, long sizeBytes, String mimeType,
-                         String roomCode, long chunkSize, int totalChunks, Instant createdAt) {
+                         String roomCode, String deviceId, long chunkSize, int totalChunks, Instant createdAt) {
         this.uploadId = uploadId;
         this.filename = filename;
         this.sizeBytes = sizeBytes;
         this.mimeType = mimeType;
         this.roomCode = roomCode;
+        this.deviceId = deviceId;
         this.chunkSize = chunkSize;
         this.totalChunks = totalChunks;
         this.createdAt = createdAt;
@@ -37,6 +39,7 @@ public class UploadSession {
     public long sizeBytes() { return sizeBytes; }
     public String mimeType() { return mimeType; }
     public String roomCode() { return roomCode; }
+    public String deviceId() { return deviceId; }
     public long chunkSize() { return chunkSize; }
     public int totalChunks() { return totalChunks; }
     public Set<Integer> receivedChunks() { return receivedChunks; }
