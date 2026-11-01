@@ -3,10 +3,11 @@
 <p class="lead desktop-copy">PC or phone, on the same Wi-Fi. Nothing to install on the other device: a browser is enough.</p>
 <p class="lead mobile-copy">On the same Wi-Fi. Nothing to install.</p>
 <form class="session-entry" novalidate (submit)="fireJoinRoomEvent($event)">
-  <button class="create-button" type="button" disabled>
+  <button class="create-button" type="button" [disabled]="isCreating()" [attr.aria-busy]="isCreating()" (click)="fireCreateRoomEvent()">
     <svg class="icon" aria-hidden="true"><use href="/icons/session-home.svg#plus" /></svg>
     <span>Create a session</span>
   </button>
+  <p class="creation-error" role="alert">{{ creationError() }}</p>
   <p class="divider">or</p>
   <label class="code-label" for="room-code">Join with a code</label>
   <div class="code-field">
@@ -23,8 +24,7 @@
       }
     </div>
   </div>
-  <p id="room-code-feedback" class="code-feedback" [class.code-error]="hasCodeError()"
-     aria-live="polite">
+  <p id="room-code-feedback" class="code-feedback" [class.code-error]="hasCodeError()" aria-live="polite">
     <svg class="feedback-icon" aria-hidden="true"><use href="/icons/session-home.svg#alert" /></svg>
     <span>{{ roomCodeFeedback() }}</span>
   </p>

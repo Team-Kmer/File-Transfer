@@ -48,6 +48,12 @@
   @apply opacity-50;
 }
 
+.creation-error:not(:empty) {
+  @apply text-sm;
+  @apply mt-3;
+  @apply text-(--color-danger);
+}
+
 .join-button {
   @apply mt-3 min-h-13;
   @apply border-(--color-border-strong) bg-(--color-surface);
