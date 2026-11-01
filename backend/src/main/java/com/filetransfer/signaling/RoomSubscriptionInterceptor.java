@@ -2,9 +2,9 @@ package com.filetransfer.signaling;
 
 import com.filetransfer.error.InvalidRoomCodeException;
 import com.filetransfer.rooms.RoomService;
+import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -71,14 +71,23 @@ public class RoomSubscriptionInterceptor implements ChannelInterceptor {
         Map<String, Object> attributes = accessor.getSessionAttributes();
         Object deviceId = attributes == null ? null : attributes.get(DEVICE_ID);
         Object roomCode = attributes == null ? null : attributes.get(ROOM_CODE);
-        if (deviceId == null || !code.equals(roomCode) || !isMember(code, deviceId.toString())) {
-            throw new MessagingException("Subscription refused to " + destination);
+        if (deviceId == null || !code.equals(roomCode)) {
+            throw new SubscriptionRefusedException(HttpStatus.FORBIDDEN,
+                    "Subscription refused to " + destination);
+        }
+        if (!roomExists(code)) {
+            throw new SubscriptionRefusedException(HttpStatus.NOT_FOUND,
+                    "Subscription refused to " + destination + ": room not found");
+        }
+        if (!roomService.isMember(code, deviceId.toString())) {
+            throw new SubscriptionRefusedException(HttpStatus.FORBIDDEN,
+                    "Subscription refused to " + destination + ": device is not a member");
         }
     }
 
-    private boolean isMember(String code, String deviceId) {
+    private boolean roomExists(String code) {
         try {
-            return roomService.isMember(code, deviceId);
+            return roomService.exists(code);
         } catch (InvalidRoomCodeException exception) {
             return false;
         }

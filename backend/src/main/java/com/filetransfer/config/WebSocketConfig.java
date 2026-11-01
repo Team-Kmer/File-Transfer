@@ -1,6 +1,7 @@
 package com.filetransfer.config;
 
 import com.filetransfer.signaling.RoomSubscriptionInterceptor;
+import com.filetransfer.signaling.StompErrorHandler;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -19,13 +20,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final CorsProperties corsProperties;
     private final RoomSubscriptionInterceptor roomSubscriptionInterceptor;
+    private final StompErrorHandler stompErrorHandler;
     private final TaskScheduler heartbeatScheduler;
 
     public WebSocketConfig(CorsProperties corsProperties,
                            RoomSubscriptionInterceptor roomSubscriptionInterceptor,
+                           StompErrorHandler stompErrorHandler,
                            @Lazy @Qualifier("messageBrokerTaskScheduler") TaskScheduler heartbeatScheduler) {
         this.corsProperties = corsProperties;
         this.roomSubscriptionInterceptor = roomSubscriptionInterceptor;
+        this.stompErrorHandler = stompErrorHandler;
         this.heartbeatScheduler = heartbeatScheduler;
     }
 
@@ -41,6 +45,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
                 .setAllowedOrigins(corsProperties.allowedOrigins().toArray(String[]::new));
+        registry.setErrorHandler(stompErrorHandler);
     }
 
     @Override

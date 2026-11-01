@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.messaging.converter.StringMessageConverter;
+import org.springframework.messaging.converter.SimpleMessageConverter;
 import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
@@ -17,6 +17,7 @@ import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +43,7 @@ class RoomSubscriptionIntegrationTest {
     @BeforeEach
     void setUp() {
         stompClient = new WebSocketStompClient(new StandardWebSocketClient());
-        stompClient.setMessageConverter(new StringMessageConverter());
+        stompClient.setMessageConverter(new SimpleMessageConverter());
     }
 
     @AfterEach
@@ -72,7 +73,7 @@ class RoomSubscriptionIntegrationTest {
 
         session.subscribe("/topic/rooms/" + room.getCode(), new IgnoreFrames());
 
-        assertRefused(errors);
+        assertRefused(errors, 403);
     }
 
     @Test
@@ -82,7 +83,7 @@ class RoomSubscriptionIntegrationTest {
 
         session.subscribe("/topic/rooms/000000", new IgnoreFrames());
 
-        assertRefused(errors);
+        assertRefused(errors, 404);
     }
 
     @Test
@@ -95,13 +96,16 @@ class RoomSubscriptionIntegrationTest {
 
         session.subscribe("/topic/rooms/" + other.getCode(), new IgnoreFrames());
 
-        assertRefused(errors);
+        assertRefused(errors, 403);
     }
 
-    private void assertRefused(ErrorCollector errors) throws InterruptedException {
+    private void assertRefused(ErrorCollector errors, int status) throws InterruptedException {
         StompHeaders error = errors.frames.poll(5, TimeUnit.SECONDS);
         assertThat(error).isNotNull();
         assertThat(error.getFirst("message")).contains("Subscription refused");
+        assertThat(errors.bodies.poll(1, TimeUnit.SECONDS))
+                .contains("\"status\":" + status)
+                .contains("\"message\":\"Subscription refused");
     }
 
     private StompSession connect(String deviceId, String roomCode, ErrorCollector handler) throws Exception {
@@ -117,17 +121,24 @@ class RoomSubscriptionIntegrationTest {
 
     private static final class ErrorCollector extends StompSessionHandlerAdapter {
         private final BlockingQueue<StompHeaders> frames = new LinkedBlockingQueue<>();
+        private final BlockingQueue<String> bodies = new LinkedBlockingQueue<>();
+
+        @Override
+        public Type getPayloadType(StompHeaders headers) {
+            return byte[].class;
+        }
 
         @Override
         public void handleFrame(StompHeaders headers, Object payload) {
             frames.add(headers);
+            bodies.add(payload == null ? "" : new String((byte[]) payload, StandardCharsets.UTF_8));
         }
     }
 
     private static final class IgnoreFrames implements StompFrameHandler {
         @Override
         public Type getPayloadType(StompHeaders headers) {
-            return String.class;
+            return byte[].class;
         }
 
         @Override
