@@ -1,13 +1,17 @@
-import { Component, computed, output, signal } from '@angular/core';
+import { Component, computed, inject, output, signal } from '@angular/core';
 import { isValidRoomCode } from '../../../../core/rooms/room-code.validator';
+import { HomeCodePresentationService } from '../../services/home-code-presentation.service';
 
 @Component({
   selector: 'app-home-intro',
   templateUrl: './home-intro.html',
   styleUrls: ['./home-intro.scss', './home-intro.tw.css'],
+  providers: [HomeCodePresentationService],
   host: { role: 'region', 'aria-labelledby': 'home-title' },
 })
 export class HomeIntro {
+  private readonly homeCodePresentationService = inject(HomeCodePresentationService);
+
   public readonly joinRoomEvent = output<string>();
 
   protected readonly roomCode = signal('');
@@ -15,6 +19,7 @@ export class HomeIntro {
 
   protected readonly hasCodeError = computed(() => this.isRoomCodeInvalid());
   protected readonly roomCodeFeedback = computed(() => this.getRoomCodeFeedback());
+  protected readonly codeDigits = computed(() => this.getCodeDigits());
 
   protected updateRoomCode(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -39,5 +44,9 @@ export class HomeIntro {
       return 'Enter exactly 6 digits.';
     }
     return 'Enter the 6-digit code shown on the other device.';
+  }
+
+  private getCodeDigits(): string[] {
+    return this.homeCodePresentationService.getCodeDigits(this.roomCode());
   }
 }

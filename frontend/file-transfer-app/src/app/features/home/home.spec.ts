@@ -32,8 +32,9 @@ describe('Home', () => {
 
   it('keeps creation visible and disabled until the next step', () => {
     const page = fixture.nativeElement as HTMLElement;
-    const createButton = page.querySelector<HTMLButtonElement>('button[type="button"]');
-    expect(createButton?.textContent).toBe('Create a session');
+    const createButton = Array.from(page.querySelectorAll('button'))
+      .find((button) => button.textContent?.trim() === 'Create a session');
+    expect(createButton).toBeDefined();
     expect(createButton?.disabled).toBe(true);
   });
 
@@ -43,10 +44,33 @@ describe('Home', () => {
     expect(page.querySelector('a[href="/receive"]')?.textContent).toBe('Receive');
   });
 
+  it('opens the Phase 1 menu and closes it with Escape', async () => {
+    const page = fixture.nativeElement as HTMLElement;
+    const toggle = page.querySelector<HTMLButtonElement>('[aria-controls="home-menu"]')!;
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    toggle.click();
+    await fixture.whenStable();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(page.querySelector('#home-menu a[href="/send"]')).not.toBeNull();
+    toggle.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await fixture.whenStable();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+  });
+
   it('explains the three steps in their order', () => {
     const page = fixture.nativeElement as HTMLElement;
     const headings = Array.from(page.querySelectorAll('ol h3'), (heading) => heading.textContent);
     expect(headings).toEqual(['Create a session', 'Join it', 'Send']);
+  });
+
+  it('closes the menu when toggled a second time', async () => {
+    const page = fixture.nativeElement as HTMLElement;
+    const toggle = page.querySelector<HTMLButtonElement>('[aria-controls="home-menu"]')!;
+    toggle.click();
+    await fixture.whenStable();
+    toggle.click();
+    await fixture.whenStable();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
   });
 
   it.each(['', '12345', '1234567', '12a456', '123 456', ' 123456', '１２３４５６'])(
