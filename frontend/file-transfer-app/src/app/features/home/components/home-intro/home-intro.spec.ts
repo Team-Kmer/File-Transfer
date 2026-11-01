@@ -19,6 +19,20 @@ describe('HomeIntro join event', () => {
     expect(joinedCodes).toEqual(['012345']);
   });
 
+  it.each<[string, string[]]>([
+    ['', [' ', ' ', ' ', ' ', ' ', ' ']],
+    ['123', ['1', '2', '3', ' ', ' ', ' ']],
+    ['012345', ['0', '1', '2', '3', '4', '5']],
+    ['1234567', ['1', '2', '3', '4', '5', '6']],
+  ])('renders six slots for code "%s" while keeping one accessible input', async (code, expected) => {
+    enterRoomCode(code);
+    await fixture.whenStable();
+    const page = fixture.nativeElement as HTMLElement;
+    const digits = Array.from(page.querySelectorAll('.code-slot'), (slot) => slot.textContent);
+    expect(digits).toEqual(expected);
+    expect(page.querySelectorAll('input[name="roomCode"]').length).toBe(1);
+  });
+
   it.each(['', '123', '1234567', '12a456'])(
     'shows an inline error without emitting malformed code "%s"', async (code) => {
       enterRoomCode(code);

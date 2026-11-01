@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { HomeIntro } from './components/home-intro/home-intro';
 import { HowItWorks } from './components/how-it-works/how-it-works';
@@ -11,6 +11,15 @@ import { HowItWorks } from './components/how-it-works/how-it-works';
 })
 export class Home {
   private readonly routerService = inject(Router);
+  protected readonly isMenuOpen = signal(false);
+
+  protected toggleMenu(): void {
+    this.isMenuOpen.update(isMenuOpen => !isMenuOpen);
+  }
+
+  protected closeMenu(): void {
+    this.isMenuOpen.set(false);
+  }
 
   protected resolveJoinRoomEvent(code: string): void {
     void this.routerService.navigate(['/room', code]);

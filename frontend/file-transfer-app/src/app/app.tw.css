@@ -1,0 +1,10 @@
+@reference 'tailwindcss';
+
+:host {
+  @apply flex flex-col items-center;
+  @apply mx-auto box-border min-h-screen max-w-[900px];
+}
+
+:host.home-layout {
+  @apply max-w-none;
+}

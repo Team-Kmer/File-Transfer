@@ -1,15 +1,37 @@
 <p class="eyebrow">Local network · no account</p>
 <h1 id="home-title" class="hero-title">Move a file from one device to another.</h1>
-<p class="lead">PC or phone, on the same Wi-Fi. Nothing to install on the other device: a browser is enough.</p>
+<p class="lead desktop-copy">PC or phone, on the same Wi-Fi. Nothing to install on the other device: a browser is enough.</p>
+<p class="lead mobile-copy">On the same Wi-Fi. Nothing to install.</p>
 <form class="session-entry" novalidate (submit)="fireJoinRoomEvent($event)">
-  <button class="create-button" type="button" disabled>Create a session</button>
+  <button class="create-button" type="button" disabled>
+    <svg class="icon" aria-hidden="true"><use href="/icons/session-home.svg#plus" /></svg>
+    <span>Create a session</span>
+  </button>
   <p class="divider">or</p>
   <label class="code-label" for="room-code">Join with a code</label>
-  <input id="room-code" class="code-input" name="roomCode" type="text"
-         inputmode="numeric" autocomplete="one-time-code" spellcheck="false"
-         aria-describedby="room-code-feedback" [attr.aria-invalid]="hasCodeError()"
-         [value]="roomCode()" (input)="updateRoomCode($event)" />
+  <div class="code-field">
+    <input id="room-code" class="code-input" name="roomCode" type="text"
+           inputmode="numeric" autocomplete="one-time-code" spellcheck="false"
+           aria-describedby="room-code-feedback" [attr.aria-invalid]="hasCodeError()"
+           [value]="roomCode()" (input)="updateRoomCode($event)" />
+    <div class="code-slots" aria-hidden="true">
+      @for (digit of codeDigits(); track $index) {
+        <span class="code-slot" [class.code-slot-error]="hasCodeError()">{{ digit }}</span>
+      }
+    </div>
+  </div>
   <p id="room-code-feedback" class="code-feedback" [class.code-error]="hasCodeError()"
-     aria-live="polite">{{ roomCodeFeedback() }}</p>
-  <button class="join-button" type="submit">Join session</button>
+     aria-live="polite">
+    <svg class="feedback-icon" aria-hidden="true"><use href="/icons/session-home.svg#alert" /></svg>
+    <span>{{ roomCodeFeedback() }}</span>
+  </p>
+  <button class="join-button" type="submit">
+    <svg class="icon desktop-copy" aria-hidden="true"><use href="/icons/session-home.svg#arrow-up" /></svg>
+    <span class="desktop-copy">Join session</span><span class="mobile-copy">Join</span>
+  </button>
+  <button class="qr-hint" type="button" disabled>
+    <svg class="icon" aria-hidden="true"><use href="/icons/session-home.svg#qr" /></svg>
+    <span class="desktop-copy">Or scan the QR code shown on the other device.</span>
+    <span class="mobile-copy">Scan a QR code</span>
+  </button>
 </form>
