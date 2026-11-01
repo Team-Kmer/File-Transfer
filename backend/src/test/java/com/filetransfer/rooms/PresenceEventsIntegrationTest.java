@@ -71,7 +71,8 @@ class PresenceEventsIntegrationTest {
                 .contains("\"roomCode\":\"" + code + "\"")
                 .contains("\"timestamp\":")
                 .contains("\"name\":\"Pixel 8\"")
-                .contains("\"deviceCount\":2");
+                .contains("\"deviceCount\":2")
+                .contains("\"maxDevices\":2");
 
         second.disconnect();
 

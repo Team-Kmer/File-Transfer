@@ -4,6 +4,7 @@ import com.filetransfer.rooms.Device;
 
 public record DeviceJoinedPayload(
         Device device,
-        int deviceCount
+        int deviceCount,
+        int maxDevices
 ) {
 }

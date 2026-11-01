@@ -11,6 +11,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Clock;
 import java.util.Map;
@@ -29,11 +30,14 @@ public class PresenceEventListener {
     private final SimpMessagingTemplate messagingTemplate;
     private final Clock clock;
     private final Map<String, Presence> presenceBySession = new ConcurrentHashMap<>();
+    private final int maxDevices;
 
-    public PresenceEventListener(RoomService roomService, SimpMessagingTemplate messagingTemplate, Clock clock) {
+    public PresenceEventListener(RoomService roomService, SimpMessagingTemplate messagingTemplate, Clock clock,
+                                 @Value("${app.rooms.max-devices}") int maxDevices) {
         this.roomService = roomService;
         this.messagingTemplate = messagingTemplate;
         this.clock = clock;
+        this.maxDevices = maxDevices;
     }
 
     @EventListener
@@ -82,7 +86,7 @@ public class PresenceEventListener {
                     .filter(device -> device.deviceId().equals(presence.deviceId()))
                     .findFirst()
                     .ifPresent(device -> publish(presence.roomCode(), DEVICE_JOINED,
-                            new DeviceJoinedPayload(device, room.getDevices().size())));
+                            new DeviceJoinedPayload(device, room.getDevices().size(), maxDevices)));
         } catch (RoomNotFoundException exception) {
             logger.debug("Room {} expired before DEVICE_JOINED was sent", presence.roomCode());
         }
