@@ -1,0 +1,15 @@
+<p class="eyebrow">Local network · no account</p>
+<h1 id="home-title" class="hero-title">Move a file from one device to another.</h1>
+<p class="lead">PC or phone, on the same Wi-Fi. Nothing to install on the other device: a browser is enough.</p>
+<form class="session-entry" novalidate (submit)="fireJoinRoomEvent($event)">
+  <button class="create-button" type="button" disabled>Create a session</button>
+  <p class="divider">or</p>
+  <label class="code-label" for="room-code">Join with a code</label>
+  <input id="room-code" class="code-input" name="roomCode" type="text"
+         inputmode="numeric" autocomplete="one-time-code" spellcheck="false"
+         aria-describedby="room-code-feedback" [attr.aria-invalid]="hasCodeError()"
+         [value]="roomCode()" (input)="updateRoomCode($event)" />
+  <p id="room-code-feedback" class="code-feedback" [class.code-error]="hasCodeError()"
+     aria-live="polite">{{ roomCodeFeedback() }}</p>
+  <button class="join-button" type="submit">Join session</button>
+</form>

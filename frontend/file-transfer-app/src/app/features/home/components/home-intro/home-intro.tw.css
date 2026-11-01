@@ -1,0 +1,102 @@
+@reference 'tailwindcss';
+
+:host {
+  @apply block;
+  @apply min-w-0;
+}
+
+.eyebrow {
+  @apply font-(family-name:--font-mono) text-sm/[1.45] font-semibold tracking-[0.1em] uppercase;
+  @apply mb-(--space-4);
+  @apply text-(--color-primary);
+}
+
+.hero-title {
+  @apply [font:var(--text-display-lg)];
+  @apply mb-(--space-5);
+}
+
+.lead {
+  @apply mb-(--space-6);
+  @apply text-(--color-text-muted);
+}
+
+.session-entry {
+  @apply grid gap-(--space-3);
+  @apply border p-(--space-5);
+  @apply border-(--color-border) bg-(--color-surface);
+  @apply rounded-(--radius-xl);
+}
+
+.create-button,
+.join-button {
+  @apply font-semibold;
+  @apply min-h-(--space-7) w-full border px-(--space-4) py-(--space-3);
+  @apply border-(--color-border-strong);
+  @apply rounded-(--radius-full);
+}
+
+.create-button {
+  @apply border-transparent bg-(--color-primary) text-(--color-on-primary);
+  @apply cursor-not-allowed;
+  @apply opacity-60;
+}
+
+.join-button {
+  @apply bg-(--color-surface);
+  @apply cursor-pointer;
+}
+
+.join-button:hover {
+  @apply bg-(--color-primary-soft);
+}
+
+.divider {
+  @apply [font:var(--text-small)] text-center;
+  @apply flex items-center gap-(--space-3);
+  @apply mx-0 my-(--space-1);
+  @apply text-(--color-text-muted);
+}
+
+.divider::before,
+.divider::after {
+  @apply content-[''];
+  @apply flex-1;
+  @apply h-px;
+  @apply bg-(--color-border);
+}
+
+.code-label {
+  @apply font-(family-name:--font-body) text-sm/[1.45] font-semibold;
+}
+
+.code-input {
+  @apply font-(family-name:--font-mono) text-xl/[1.2] font-bold tracking-[0.25em];
+  @apply min-h-[56px] min-w-0 w-full border px-(--space-4) py-(--space-3);
+  @apply border-(--color-border-strong) bg-(--color-surface-sunken) text-(--color-text);
+  @apply rounded-(--radius-md);
+}
+
+.code-feedback {
+  @apply [font:var(--text-small)];
+  @apply text-(--color-text-muted);
+}
+
+.code-error {
+  @apply text-(--color-danger);
+}
+
+.code-input[aria-invalid='true'] {
+  @apply border-(--color-danger);
+}
+
+.join-button:focus-visible,
+.code-input:focus-visible {
+  @apply [outline:2px_solid_var(--color-primary)] outline-offset-(--space-1);
+}
+
+@media (min-width: 768px) {
+  .hero-title {
+    @apply [font:var(--text-display-xl)];
+  }
+}

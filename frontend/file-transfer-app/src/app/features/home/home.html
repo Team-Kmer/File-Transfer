@@ -1,13 +1,14 @@
-<div class="home-content">
-  <div class="content">
-    <h1 class="title">File Transfer</h1>
-    <h2 class="sub-title">This app makes it easier to transfer files between two devices on a LAN. </h2>
-  </div>
-  <section class="btn-section">
-    <p>Choose an action:</p>
-    <div class="button">
-      <a mat-flat-button routerLink="/send">Send</a>
-      <a mat-flat-button routerLink="/receive">Receive</a>
-    </div>
-  </section>
-</div>
+<header class="home-header">
+  <a class="brand" routerLink="/" aria-label="File Transfer, home">
+    <span class="brand-icon" aria-hidden="true">⇄</span> File Transfer
+  </a>
+</header>
+<main class="home-main">
+  <app-home-intro (joinRoomEvent)="resolveJoinRoomEvent($event)" />
+  <app-how-it-works />
+</main>
+<footer class="legacy-links" aria-label="Phase 1 pages">
+  <span>Phase 1</span>
+  <a class="legacy-link" routerLink="/send">Send</a>
+  <a class="legacy-link" routerLink="/receive">Receive</a>
+</footer>
