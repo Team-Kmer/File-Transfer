@@ -41,7 +41,11 @@
 .create-button {
   @apply min-h-14;
   @apply border-transparent bg-(--color-primary) text-(--color-on-primary);
+}
+
+.create-button:disabled {
   @apply cursor-not-allowed;
+  @apply opacity-50;
 }
 
 .join-button {
@@ -84,7 +88,7 @@
 .code-input {
   @apply absolute inset-0 z-10;
   @apply h-full min-w-0 w-full;
-  @apply cursor-text;
+  @apply pointer-events-none;
   @apply opacity-0;
 }
 
@@ -106,7 +110,11 @@
   @apply flex items-center justify-center;
   @apply h-13 border;
   @apply border-(--color-border-strong) bg-(--color-surface);
-  @apply rounded-(--radius-md);
+  @apply rounded-(--radius-md) cursor-text;
+}
+
+.code-slot-active {
+  @apply [outline:2px_solid_var(--color-primary)] outline-offset-2;
 }
 
 .code-slot:nth-child(4) {
@@ -150,8 +158,7 @@
   @apply cursor-not-allowed;
 }
 
-.join-button:focus-visible,
-.code-field:focus-within {
+.join-button:focus-visible {
   @apply [outline:2px_solid_var(--color-primary)] outline-offset-4;
 }
 

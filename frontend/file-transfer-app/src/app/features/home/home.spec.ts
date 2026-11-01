@@ -73,7 +73,7 @@ describe('Home', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it.each(['', '12345', '1234567', '12a456', '123 456', ' 123456', '１２３４５６'])(
+  it.each(['', '12345', '12a456', '１２３４５６'])(
     'rejects malformed code "%s" inline without HTTP or navigation', async (code) => {
       enterRoomCode(code);
       await submitJoin();
@@ -85,7 +85,10 @@ describe('Home', () => {
     },
   );
 
-  it.each([['482913', '/room/482913'], ['012345', '/room/012345'], ['000000', '/room/000000']])(
+  it.each([
+    ['482913', '/room/482913'], ['012345', '/room/012345'], ['000000', '/room/000000'],
+    ['1234567', '/room/123456'], ['123 456', '/room/123456'], [' 123456', '/room/123456'],
+  ])(
     'navigates with valid code "%s" without joining through HTTP', async (code, expectedUrl) => {
       enterRoomCode(code);
       await submitJoin();

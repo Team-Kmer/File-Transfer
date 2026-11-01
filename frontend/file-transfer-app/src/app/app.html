@@ -1,2 +1,2 @@
-<router-outlet (activate)="resolveActivateEvent($event)"></router-outlet>
+<router-outlet #outlet="outlet" (activate)="resolveActivateEvent(outlet)"></router-outlet>
 

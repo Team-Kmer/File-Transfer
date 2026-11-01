@@ -1,9 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { JoinResult, Room } from './room.model';
+import { DeviceRequest, JoinResult, Room } from './room.model';
 import { map, Observable } from 'rxjs';
-import { DeviceRequest } from '../interfaces/deviceRequest';
 
 @Injectable({ providedIn: 'root' })
 export class RoomsApi {

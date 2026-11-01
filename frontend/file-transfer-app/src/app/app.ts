@@ -1,18 +1,17 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { Home } from './features/home/home';
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrls: ['./app.scss', './app.tw.css'],
-  host: { '[class.home-layout]': 'isHomeView()' },
+  host: { '[class.home-layout]': 'isWideLayout()' },
 })
 export class App {
-  protected readonly isHomeView = signal(false);
+  protected readonly isWideLayout = signal(false);
 
-  protected resolveActivateEvent(component: unknown): void {
-    this.isHomeView.set(component instanceof Home);
+  protected resolveActivateEvent(outlet: RouterOutlet): void {
+    this.isWideLayout.set(outlet.activatedRouteData['layout'] === 'wide');
   }
 }

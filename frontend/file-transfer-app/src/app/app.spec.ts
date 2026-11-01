@@ -13,7 +13,12 @@ describe('App', () => {
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
-        provideRouter([{ path: '', component: Home }, { path: 'send', component: Send }]),
+        provideRouter([
+          { path: '', component: Home, data: { layout: 'wide' } },
+          { path: 'send', component: Send },
+          { path: 'wide-send', component: Send, data: { layout: 'wide' } },
+          { path: 'compact-home', component: Home },
+        ]),
         provideHttpClient(), provideHttpClientTesting(),
       ],
     }).compileComponents();
@@ -33,4 +38,12 @@ describe('App', () => {
     expect(page.querySelector('app-send')).not.toBeNull();
     expect(page.classList.contains('home-layout')).toBe(false);
   });
+
+  it.each([['/wide-send', true], ['/compact-home', false]])(
+    'uses route data for %s rather than the component type', async (url, isWide) => {
+      await TestBed.inject(Router).navigateByUrl(url);
+      await fixture.whenStable();
+      expect(fixture.nativeElement.classList.contains('home-layout')).toBe(isWide);
+    },
+  );
 });
