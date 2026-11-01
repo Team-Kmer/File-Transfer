@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { RoomSessionService } from '../../../core/services/room-session.service';
+import { RoomSessionService } from '../../../core/rooms/room-session.service';
 import { RoomWaitingService } from './room-waiting.service';
 import { environment } from '../../../../environments/environment';
 

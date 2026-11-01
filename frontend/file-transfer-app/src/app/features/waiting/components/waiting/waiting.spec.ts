@@ -24,7 +24,11 @@ describe('Creation and waiting screen', () => {
     harness = await RouterTestingHarness.create();
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.verify();
+    TestBed.resetTestingModule();
+    vi.useRealTimers();
+  });
 
   it('creates, shows the invitation, then cancels without deleting the room', async () => {
     await harness.navigateByUrl('/');
@@ -56,6 +60,25 @@ describe('Creation and waiting screen', () => {
       .flush({ message: 'unrelated wording' }, { status: 404, statusText: 'Not Found' });
     await harness.fixture.whenStable();
     expect(harness.routeNativeElement!.textContent).toContain('Unknown or expired code');
+    expect(harness.routeNativeElement!.querySelector('.waiting-title')).toBeNull();
+    expect(harness.routeNativeElement!.querySelector('.waiting-lead')).toBeNull();
+  });
+
+  it('removes the invitation and sharing actions when the countdown reaches zero', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
+    vi.setSystemTime(new Date('2026-11-02T12:00:00Z'));
+    await harness.navigateByUrl('/room/012345/waiting');
+    http.expectOne(`${environment.apiBaseUrl}/rooms/012345`)
+      .flush({ ...room(), expiresAt: '2026-11-02T12:00:01Z' });
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement!.querySelector('.session-code')).not.toBeNull();
+    await vi.advanceTimersByTimeAsync(1000);
+    await harness.fixture.whenStable();
+    const page = harness.routeNativeElement!;
+    expect(page.textContent).toContain('Unknown or expired code');
+    expect(page.querySelector('.waiting-title')).toBeNull();
+    expect(page.querySelector('.session-code, .copy-code, .copy-link, .lan-link')).toBeNull();
+    expect(page.querySelector('.cancel-button')?.textContent).toBe('Back to home');
   });
 
   it('rejects a malformed waiting route without calling the API', async () => {

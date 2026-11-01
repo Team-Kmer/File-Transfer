@@ -6,7 +6,7 @@ import {Receive} from './features/receive/receive';
 export const routes: Routes = [
   {path: '', component: Home, data: { layout: 'wide' }},
   {
-    path: 'room/:code/waiting', data: { layout: 'wide' },
+    path: 'room/:code/waiting',
     loadChildren: () => import('./features/waiting/waiting.routes').then(module => module.waitingRoutes),
   },
   {path: 'send', component: Send},

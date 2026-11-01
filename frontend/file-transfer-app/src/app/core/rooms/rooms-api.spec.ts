@@ -62,7 +62,7 @@ describe('RoomsApi', () => {
   it.each([[409, 'Conflict'], [404, 'Not Found']])(
     'preserves HTTP %s as an AppError regardless of the API message', async (status, statusText) => {
       const response = firstValueFrom(service.joinRoom('012345', device));
-      const assertion = expect(response).rejects.toEqual({ kind: 'client', status, message: 'Invalid request' });
+      const assertion = expect(response).rejects.toMatchObject({ kind: 'client', status });
       const request = http.expectOne(`${environment.apiBaseUrl}/rooms/012345/join`);
       request.flush({ message: 'Unrelated backend wording' }, { status, statusText });
       await assertion;

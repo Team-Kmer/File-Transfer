@@ -44,7 +44,7 @@ describe('HomeIntro join event', () => {
     expect(input.value).toBe(expected);
     expect(Array.from(page.querySelectorAll('.code-slot'), slot => slot.textContent).join('').trim())
       .toBe(expected);
-    expect(input.maxLength).toBe(6);
+    expect(input.maxLength).toBe(-1);
   });
 
   it.each(['', '123', '12a456'])(
@@ -65,7 +65,7 @@ describe('HomeIntro join event', () => {
   }
 
   it.each([['482 913', '482913'], ['0123457', '012345'], ['12a45', '1245']])(
-    'normalizes pasted "%s" before the native length limit', async (text, expected) => {
+    'normalizes pasted "%s" while keeping at most six digits', async (text, expected) => {
       const input: HTMLInputElement = fixture.nativeElement.querySelector('input[name="roomCode"]');
       const clipboard = new Event('paste', { bubbles: true, cancelable: true });
       Object.defineProperty(clipboard, 'clipboardData', { value: { getData: () => text } });

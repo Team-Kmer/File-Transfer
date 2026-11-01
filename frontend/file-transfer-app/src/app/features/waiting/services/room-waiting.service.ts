@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, interval, Subscription } from 'rxjs';
 import { AppError } from '../../../core/errors/app-error.model';
 import { roomErrorMessage } from '../../../core/rooms/room-error-message';
-import { RoomSessionService } from '../../../core/services/room-session.service';
+import { RoomSessionService } from '../../../core/rooms/room-session.service';
 import { remainingMs, remainingTimeLabel } from '../../../core/rooms/room-time';
 import { isValidRoomCode } from '../../../core/rooms/room-code.validator';
 
@@ -18,10 +18,13 @@ export class RoomWaitingService {
   public readonly error = signal('');
 
   public readonly remaining = computed(() => this.getRemainingMs());
+  public readonly isExpired = computed(() => this.isRoomExpired());
+  public readonly displayError = computed(() => this.getDisplayError());
   public readonly countdown = computed(() => this.getCountdown());
   public readonly statusLabel = computed(() => this.getStatusLabel());
 
-  private readonly clockSubscription = interval(1000).pipe(takeUntilDestroyed())
+  private readonly clockSubscription = interval(1000)
+    .pipe(takeUntilDestroyed())
     .subscribe(() => this.now.set(Date.now()));
   private roomSubscription: Subscription | undefined;
 
@@ -33,10 +36,13 @@ export class RoomWaitingService {
     }
     this.isLoading.set(true);
     this.error.set('');
-    this.roomSubscription = this.roomSessionService.loadRoom(code).pipe(
-      takeUntilDestroyed(this.destroyRefService),
-      finalize(() => this.isLoading.set(false)),
-    ).subscribe({ error: (error: AppError) => this.error.set(roomErrorMessage(error)) });
+    this.roomSubscription = this.roomSessionService
+      .loadRoom(code)
+      .pipe(
+        takeUntilDestroyed(this.destroyRefService),
+        finalize(() => this.isLoading.set(false)),
+      )
+      .subscribe({ error: (error: AppError) => this.error.set(roomErrorMessage(error)) });
   }
 
   private getRemainingMs(): number {
@@ -54,7 +60,18 @@ export class RoomWaitingService {
     if (this.hasError()) {
       return 'Session unavailable';
     }
-    return this.remaining() === 0 ? 'Session expired' : 'Waiting for a device…';
+    return this.isExpired() ? 'Session expired' : 'Waiting for a device…';
+  }
+
+  private isRoomExpired(): boolean {
+    return this.room() !== null && this.remaining() === 0;
+  }
+
+  private getDisplayError(): string {
+    if (this.hasError()) {
+      return this.error();
+    }
+    return this.isExpired() ? 'Unknown or expired code' : '';
   }
 
   private hasError(): boolean {
