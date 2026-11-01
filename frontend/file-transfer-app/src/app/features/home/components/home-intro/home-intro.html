@@ -10,13 +10,16 @@
   <p class="divider">or</p>
   <label class="code-label" for="room-code">Join with a code</label>
   <div class="code-field">
-    <input id="room-code" class="code-input" name="roomCode" type="text"
+    <input #codeInput id="room-code" class="code-input" name="roomCode" type="text" maxlength="6"
            inputmode="numeric" autocomplete="one-time-code" spellcheck="false"
            aria-describedby="room-code-feedback" [attr.aria-invalid]="hasCodeError()"
-           [value]="roomCode()" (input)="updateRoomCode($event)" />
+           [value]="roomCode()" (input)="updateRoomCode($event)" (paste)="pasteRoomCode($event)"
+           (focus)="updateCodeFocus($event)" (blur)="clearCodeFocus()"
+           (keyup)="updateCodeFocus($event)" (select)="updateCodeFocus($event)" />
     <div class="code-slots" aria-hidden="true">
       @for (digit of codeDigits(); track $index) {
-        <span class="code-slot" [class.code-slot-error]="hasCodeError()">{{ digit }}</span>
+        <span class="code-slot" [class.code-slot-error]="hasCodeError()" [class.code-slot-active]="isCodeSlotActive($index)"
+              (pointerdown)="focusCodeSlot($event, $index, codeInput)">{{ digit }}</span>
       }
     </div>
   </div>

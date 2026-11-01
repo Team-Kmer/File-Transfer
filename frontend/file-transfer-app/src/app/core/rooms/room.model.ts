@@ -1,5 +1,13 @@
-import { Device } from '../interfaces/device';
+export interface Device {
+  deviceId: string;
+  name: string;
+  joinedAt: string;
+}
 
+export interface DeviceRequest {
+  deviceId: string;
+  name: string;
+}
 
 export interface Room {
   code: string;
