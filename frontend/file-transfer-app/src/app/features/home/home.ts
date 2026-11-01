@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { HomeIntro } from './components/home-intro/home-intro';
 import { HowItWorks } from './components/how-it-works/how-it-works';
-import { RoomSessionService } from '../../core/services/room-session.service';
+import { RoomSessionService } from '../../core/rooms/room-session.service';
 import { PageHeader } from '../../shared/components/page-header/page-header';
 
 @Component({
@@ -22,7 +22,9 @@ export class Home {
   }
 
   protected resolveCreateRoomEvent(): void {
-    this.roomSessionService.createRoom().pipe(takeUntilDestroyed(this.destroyRefService))
-      .subscribe(room => void this.routerService.navigate(['/room', room.code, 'waiting']));
+    this.roomSessionService
+      .createRoom()
+      .pipe(takeUntilDestroyed(this.destroyRefService))
+      .subscribe((room) => void this.routerService.navigate(['/room', room.code, 'waiting']));
   }
 }

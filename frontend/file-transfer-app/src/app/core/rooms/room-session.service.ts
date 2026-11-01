@@ -2,9 +2,9 @@ import { inject, Injectable, signal } from '@angular/core';
 import { catchError, EMPTY, finalize, Observable, of, tap } from 'rxjs';
 import { DeviceIdentity } from '../device/device-identity';
 import { AppError } from '../errors/app-error.model';
-import { Room } from '../rooms/room.model';
-import { roomErrorMessage } from '../rooms/room-error-message';
-import { RoomsApi } from '../rooms/rooms-api';
+import { Room } from './room.model';
+import { roomErrorMessage } from './room-error-message';
+import { RoomsApi } from './rooms-api';
 
 @Injectable({ providedIn: 'root' })
 export class RoomSessionService {
@@ -24,7 +24,7 @@ export class RoomSessionService {
     this.creationError.set('');
     const { deviceId, name } = this.deviceIdentityService;
     return this.roomsApiService.createRoom({ deviceId, name }).pipe(
-      tap(room => this.receiveRoom(room)),
+      tap((room) => this.receiveRoom(room)),
       catchError((error: AppError) => this.handleCreationError(error)),
       finalize(() => this.isCreating.set(false)),
     );
@@ -36,7 +36,7 @@ export class RoomSessionService {
       return of(room);
     }
     this.clearRoom();
-    return this.roomsApiService.getRoom(code).pipe(tap(received => this.receiveRoom(received)));
+    return this.roomsApiService.getRoom(code).pipe(tap((received) => this.receiveRoom(received)));
   }
 
   public receiveRoom(room: Room): void {

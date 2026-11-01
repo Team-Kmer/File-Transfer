@@ -2,7 +2,7 @@ import { Component, effect, inject, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
-import { RoomSessionService } from '../../../../core/services/room-session.service';
+import { RoomSessionService } from '../../../../core/rooms/room-session.service';
 import { PageHeader } from '../../../../shared/components/page-header/page-header';
 import { RoomWaitingService } from '../../services/room-waiting.service';
 import { RoomInvite } from '../room-invite/room-invite';
@@ -20,9 +20,10 @@ export class Waiting {
   private readonly routerService = inject(Router);
   private readonly roomSessionService = inject(RoomSessionService);
 
-  private readonly code = toSignal(this.activatedRouteService.paramMap.pipe(
-    map(parameters => parameters.get('code') ?? ''),
-  ), { initialValue: '' });
+  private readonly code = toSignal(
+    this.activatedRouteService.paramMap.pipe(map((parameters) => parameters.get('code') ?? '')),
+    { initialValue: '' },
+  );
 
   private readonly loadRoomEffect = effect(() => {
     const code = this.code();

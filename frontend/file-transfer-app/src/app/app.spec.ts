@@ -1,10 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { App } from './app';
 import { Home } from './features/home/home';
 import { Send } from './features/send/send';
+import { environment } from '../environments/environment';
 
 describe('App', () => {
   let fixture: ComponentFixture<App>;
@@ -18,6 +19,7 @@ describe('App', () => {
           { path: 'send', component: Send },
           { path: 'wide-send', component: Send, data: { layout: 'wide' } },
           { path: 'compact-home', component: Home },
+          { path: 'room/:code/waiting', loadChildren: () => import('./features/waiting/waiting.routes').then(module => module.waitingRoutes) },
         ]),
         provideHttpClient(), provideHttpClientTesting(),
       ],
@@ -46,4 +48,14 @@ describe('App', () => {
       expect(fixture.nativeElement.classList.contains('home-layout')).toBe(isWide);
     },
   );
+
+  it('uses the layout declared on the waiting child route without parent data', async () => {
+    await TestBed.inject(Router).navigateByUrl('/room/012345/waiting');
+    await fixture.whenStable();
+    TestBed.inject(HttpTestingController).expectOne(`${environment.apiBaseUrl}/rooms/012345`)
+      .flush({ code: '012345', createdAt: '', expiresAt: new Date(Date.now() + 60000).toISOString(), devices: [] });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('app-waiting')).not.toBeNull();
+    expect(fixture.nativeElement.classList.contains('home-layout')).toBe(true);
+  });
 });
