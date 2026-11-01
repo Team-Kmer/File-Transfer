@@ -1,9 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { Home } from './home';
+import { DeviceIdentity } from '../../core/device/device-identity';
+import { errorInterceptor } from '../../core/interceptors/error.interceptor';
+import { environment } from '../../../environments/environment';
 
 describe('Home', () => {
   let fixture: ComponentFixture<Home>;
@@ -11,8 +14,9 @@ describe('Home', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Home],
-      providers: [provideRouter([{ path: 'room/:code', component: Home }]),
-        provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideRouter([
+        { path: 'room/:code', component: Home }, { path: 'room/:code/waiting', component: Home },
+      ]), provideHttpClient(withInterceptors([errorInterceptor])), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Home);
@@ -30,12 +34,38 @@ describe('Home', () => {
     expect(page.querySelector('label')?.textContent).toBe('Join with a code');
   });
 
-  it('keeps creation visible and disabled until the next step', () => {
+  it('enables session creation on arrival', () => {
     const page = fixture.nativeElement as HTMLElement;
     const createButton = Array.from(page.querySelectorAll('button'))
       .find((button) => button.textContent?.trim() === 'Create a session');
     expect(createButton).toBeDefined();
-    expect(createButton?.disabled).toBe(true);
+    expect(createButton?.disabled).toBe(false);
+  });
+
+  it('creates one room with device identity and opens its waiting route', async () => {
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('.create-button');
+    button.click();
+    button.click();
+    const request = TestBed.inject(HttpTestingController).expectOne(`${environment.apiBaseUrl}/rooms`);
+    expect(request.request.method).toBe('POST');
+    const identity = TestBed.inject(DeviceIdentity);
+    expect(request.request.body).toEqual({ deviceId: identity.deviceId, name: identity.name });
+    await fixture.whenStable();
+    expect(button.disabled).toBe(true);
+    request.flush({ code: '012345', createdAt: '2026-11-02T12:00:00Z', expiresAt: '2026-11-02T18:00:00Z', devices: [] });
+    await fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe('/room/012345/waiting');
+  });
+
+  it('shows a status-based creation error and enables retry', async () => {
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('.create-button');
+    button.click();
+    TestBed.inject(HttpTestingController).expectOne(`${environment.apiBaseUrl}/rooms`)
+      .flush({ message: 'misleading message' }, { status: 503, statusText: 'Unavailable' });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.creation-error').textContent).toContain('Server error');
+    expect(button.disabled).toBe(false);
+    expect(TestBed.inject(Router).url).toBe('/');
   });
 
   it('keeps both Phase 1 pages reachable through links', () => {

@@ -1,0 +1,29 @@
+<div class="qr-placeholder">
+  <svg class="qr-icon" aria-hidden="true"><use href="/icons/session-home.svg#qr" /></svg>
+  <p>QR code coming soon</p>
+</div>
+<section class="invitation-code" aria-labelledby="session-code-label">
+  <label id="session-code-label" class="code-label" for="session-code">Session code</label>
+  <input #codeField id="session-code" class="session-code" type="text" [value]="displayCode()" readonly spellcheck="false" />
+  <div class="waiting-status" role="status">
+    <span class="status-dot" aria-hidden="true"></span><span>{{ status() }}</span>
+    <span class="countdown" aria-label="Time remaining">{{ countdown() }}</span>
+  </div>
+  <div class="invite-actions">
+    <button class="copy-code" type="button" (click)="copyCode(codeField)">
+      <svg class="icon" aria-hidden="true"><use href="/icons/session-home.svg#copy" /></svg>Copy code
+    </button>
+    <button class="copy-link" type="button" (click)="copyLink(linkField)">Copy link</button>
+  </div>
+</section>
+<section class="lan-fallback" aria-labelledby="lan-link-label">
+  <label id="lan-link-label" class="link-label" for="lan-link">Open this address on the other device:</label>
+  <div class="link-row">
+    <input #linkField id="lan-link" class="lan-link" type="text" [value]="joinUrl()" readonly spellcheck="false" />
+    <button class="cancel-button" type="button" (click)="fireCancelSessionEvent()">Cancel session</button>
+  </div>
+  @if (isLocalhost) {
+    <p class="localhost-hint">Open the app via your computer’s LAN IP address to share it with another device.</p>
+  }
+</section>
+<p class="copy-feedback" role="status" aria-live="polite">{{ copyFeedback() }}</p>

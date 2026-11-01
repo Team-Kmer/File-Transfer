@@ -1,0 +1,128 @@
+@reference 'tailwindcss';
+
+:host {
+  @apply relative;
+  @apply flex shrink-0 items-center;
+  @apply h-16 border-b px-4;
+  @apply border-(--color-border) bg-(--color-surface);
+}
+
+.brand {
+  @apply [font:var(--text-title)] no-underline;
+  @apply inline-flex items-center gap-3;
+  @apply min-h-11;
+}
+
+.brand-icon {
+  @apply size-8 p-1;
+  @apply bg-(--color-primary) text-(--color-on-primary);
+  @apply rounded-(--radius-md);
+}
+
+.header-actions {
+  @apply flex items-center gap-2;
+  @apply ml-auto;
+}
+
+.icon-button,
+.menu-button {
+  @apply flex items-center justify-center;
+  @apply size-11;
+  @apply text-(--color-text-muted);
+  @apply rounded-(--radius-md);
+}
+
+.menu-button {
+  @apply border;
+  @apply border-(--color-border);
+  @apply cursor-pointer;
+}
+
+.icon {
+  @apply shrink-0;
+  @apply size-5;
+}
+
+.language,
+.desktop-icon {
+  @apply hidden;
+}
+
+.brand:focus-visible,
+.menu-button:focus-visible,
+.legacy-link:focus-visible {
+  @apply [outline:2px_solid_var(--color-primary)] outline-offset-4;
+}
+
+.legacy-links {
+  @apply absolute top-full right-4 z-20;
+  @apply hidden flex-col;
+  @apply mt-2 w-48 border p-3;
+  @apply border-(--color-border) bg-(--color-surface);
+  @apply rounded-(--radius-lg) [box-shadow:var(--shadow-md)];
+}
+
+.legacy-links.is-open {
+  @apply flex;
+}
+
+.legacy-link {
+  @apply no-underline;
+  @apply flex items-center;
+  @apply min-h-11 px-2;
+  @apply rounded-(--radius-sm);
+}
+
+.legacy-link:hover {
+  @apply bg-(--color-primary-soft);
+}
+
+.status-badge {
+  @apply text-xs font-semibold whitespace-nowrap;
+  @apply ml-3 px-3 py-2;
+  @apply bg-(--color-warning-soft) text-(--color-on-warning-soft);
+  @apply rounded-(--radius-full);
+}
+
+:host(.with-status) .brand-text,
+:host(.with-status) .icon-button {
+  @apply hidden;
+}
+
+@media (min-width: 768px) {
+  :host {
+    @apply h-18 px-8;
+  }
+
+  .header-actions {
+    @apply gap-5;
+  }
+
+  .language {
+    @apply text-sm font-semibold;
+    @apply inline-flex items-center gap-2;
+  }
+
+  .desktop-icon {
+    @apply block;
+  }
+
+  .mobile-icon {
+    @apply hidden;
+  }
+
+  .menu-button {
+    @apply border-0;
+  }
+
+  .status-badge {
+    @apply absolute top-1/2 left-1/2;
+    @apply m-0;
+    @apply [transform:translate(-50%,-50%)];
+  }
+
+  :host(.with-status) .brand-text,
+  :host(.with-status) .icon-button {
+    @apply inline-flex;
+  }
+}

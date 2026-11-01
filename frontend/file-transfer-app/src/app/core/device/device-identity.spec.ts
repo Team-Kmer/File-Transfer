@@ -2,7 +2,17 @@ import { defaultName, DeviceIdentity } from './device-identity';
 
 describe('DeviceIdentity', () => {
   beforeEach(() => localStorage.clear());
-  afterEach(() => localStorage.clear());
+  afterEach(() => {
+    localStorage.clear();
+    vi.unstubAllGlobals();
+  });
+
+  it('generates a UUID on LAN HTTP when randomUUID is unavailable', () => {
+    vi.stubGlobal('crypto', { getRandomValues: (bytes: Uint8Array) => bytes.fill(0) });
+    const identity = new DeviceIdentity();
+    expect(identity.deviceId).toBe('00000000-0000-4000-8000-000000000000');
+    expect(localStorage.getItem(DeviceIdentity.STORAGE_KEY)).toBe(identity.deviceId);
+  });
 
   it('generates and persists a UUID on first access', () => {
     const identity = new DeviceIdentity();

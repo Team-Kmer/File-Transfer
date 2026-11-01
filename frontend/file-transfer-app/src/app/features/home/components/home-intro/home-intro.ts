@@ -1,4 +1,4 @@
-import { Component, computed, output, signal } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { isValidRoomCode } from '../../../../core/rooms/room-code.validator';
 import { codeDigits, normalizeRoomCode } from './code-digits';
 
@@ -9,6 +9,9 @@ import { codeDigits, normalizeRoomCode } from './code-digits';
   host: { role: 'region', 'aria-labelledby': 'home-title' },
 })
 export class HomeIntro {
+  public readonly isCreating = input(false);
+  public readonly creationError = input('');
+  public readonly createRoomEvent = output<void>();
   public readonly joinRoomEvent = output<string>();
 
   protected readonly roomCode = signal('');
@@ -18,6 +21,10 @@ export class HomeIntro {
   protected readonly hasCodeError = computed(() => this.isRoomCodeInvalid());
   protected readonly roomCodeFeedback = computed(() => this.getRoomCodeFeedback());
   protected readonly codeDigits = computed(() => this.getCodeDigits());
+
+  protected fireCreateRoomEvent(): void {
+    this.createRoomEvent.emit();
+  }
 
   protected updateRoomCode(event: Event): void {
     const input = event.target as HTMLInputElement;
