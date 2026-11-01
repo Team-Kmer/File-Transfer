@@ -20,7 +20,7 @@ public class RoomSubscriptionInterceptor implements ChannelInterceptor {
 
     static final String DEVICE_ID = "deviceId";
     static final String ROOM_CODE = "roomCode";
-    private static final Pattern ROOM_TOPIC = Pattern.compile("/topic/rooms/([^/]+)");
+    static final Pattern ROOM_TOPIC = Pattern.compile("/topic/rooms/([^/]+)");
 
     private final RoomService roomService;
 
