@@ -1,21 +1,56 @@
-@reference "tailwindcss";
+@reference 'tailwindcss';
 
-.content{
-  @apply flex flex-col items-center;
+:host {
+  @apply block;
   @apply w-full;
+  @apply text-(--color-text);
 }
 
-.title {
-  font: var(--text-display-xl);
+.home-header {
+  @apply flex items-center;
+  @apply min-h-[64px] border-b px-(--space-5);
+  @apply border-b-(--color-border) bg-(--color-surface);
 }
 
-.sub-title {
-  @apply py-4;
+.brand {
+  @apply [font:var(--text-title)] no-underline;
+  @apply inline-flex items-center gap-(--space-3);
+  @apply min-h-[44px];
+}
+
+.brand-icon {
+  @apply inline-flex items-center justify-center;
+  @apply size-[36px];
+  @apply bg-(--color-primary) text-(--color-on-primary);
+  @apply rounded-(--radius-md);
+}
+
+.home-main {
+  @apply grid grid-cols-1 items-center gap-(--space-7);
+  @apply px-(--space-5) py-(--space-7);
+}
+
+.brand:focus-visible,
+.legacy-link:focus-visible {
+  @apply [outline:2px_solid_var(--color-primary)] outline-offset-(--space-1);
+}
+
+.legacy-links {
+  @apply [font:var(--text-small)];
+  @apply flex flex-wrap items-center justify-center gap-x-(--space-4) gap-y-0;
+  @apply px-(--space-5) pt-0 pb-(--space-6);
   @apply text-(--color-text-muted);
 }
 
-.button{
-  @apply flex justify-center items-center gap-4;
-  @apply py-4;
-  @apply w-full;
+.legacy-link {
+  @apply underline underline-offset-(--space-1);
+  @apply inline-flex items-center;
+  @apply min-h-[44px];
+}
+
+@media (min-width: 768px) {
+  .home-main {
+    @apply grid-cols-2;
+    @apply px-(--space-7) py-(--space-8);
+  }
 }

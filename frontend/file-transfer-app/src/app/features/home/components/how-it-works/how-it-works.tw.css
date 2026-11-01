@@ -1,0 +1,39 @@
+@reference 'tailwindcss';
+
+:host {
+  @apply block;
+  @apply min-w-0;
+}
+
+.steps-title,
+.step-description {
+  @apply [font:var(--text-small)];
+  @apply text-(--color-text-muted);
+}
+
+.steps-title {
+  @apply mb-(--space-3);
+}
+
+.steps {
+  @apply list-none;
+  @apply grid gap-(--space-3);
+  @apply m-0 p-0;
+}
+
+.step {
+  @apply flex items-start gap-(--space-4);
+  @apply border p-(--space-4);
+  @apply border-(--color-border) bg-(--color-surface);
+  @apply rounded-(--radius-lg);
+}
+
+.step-number {
+  @apply font-(family-name:--font-mono) text-sm/[1.45] font-normal;
+  @apply pt-(--space-1);
+  @apply text-(--color-primary);
+}
+
+.step-title {
+  @apply font-(family-name:--font-body) text-base/[1.5] font-semibold;
+}
