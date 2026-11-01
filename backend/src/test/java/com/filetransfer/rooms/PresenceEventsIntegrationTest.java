@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -80,7 +81,23 @@ class PresenceEventsIntegrationTest {
 
         first.disconnect();
     }
+    @Test
+    void serverAnnouncesTheContractHeartbeat() throws Exception {
+        CompletableFuture<long[]> heartbeat = new CompletableFuture<>();
+        WebSocketHttpHeaders handshakeHeaders = new WebSocketHttpHeaders();
+        handshakeHeaders.setOrigin(ORIGIN);
+        StompSession session = stompClient
+                .connectAsync("ws://localhost:" + port + "/ws", handshakeHeaders, new StompSessionHandlerAdapter() {
+                    @Override
+                    public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+                        heartbeat.complete(connectedHeaders.getHeartbeat());
+                    }
+                })
+                .get(10, TimeUnit.SECONDS);
 
+        assertThat(heartbeat.get(5, TimeUnit.SECONDS)).containsExactly(10000, 10000);
+        session.disconnect();
+    }
     private BlockingQueue<String> subscribe(StompSession session, String code) {
         BlockingQueue<String> events = new LinkedBlockingQueue<>();
         session.subscribe("/topic/rooms/" + code, new StompFrameHandler() {
