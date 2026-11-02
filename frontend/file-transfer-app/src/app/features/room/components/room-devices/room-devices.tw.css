@@ -1,0 +1,65 @@
+@reference 'tailwindcss';
+
+:host {
+  @apply block;
+  @apply border p-4;
+  @apply border-(--color-border) bg-(--color-surface);
+  @apply rounded-(--radius-lg) [box-shadow:var(--shadow-sm)];
+}
+
+.devices-heading {
+  @apply flex items-center justify-between gap-3;
+  @apply mb-4;
+}
+
+h2 {
+  @apply text-sm font-bold;
+}
+
+.device-counter {
+  @apply font-(family-name:--font-mono) text-xs whitespace-nowrap;
+  @apply text-(--color-text-muted);
+}
+
+.devices {
+  @apply flex flex-col gap-3;
+}
+
+.device {
+  @apply flex items-center gap-3;
+}
+
+.device-icon {
+  @apply flex shrink-0 items-center justify-center;
+  @apply size-9;
+  @apply bg-(--color-surface-sunken);
+  @apply rounded-(--radius-full);
+}
+
+.device-name {
+  @apply text-sm font-semibold break-words;
+  @apply min-w-0;
+}
+
+.device-status {
+  @apply text-xs font-semibold whitespace-nowrap;
+  @apply ml-auto px-2 py-1;
+  @apply bg-(--color-primary-soft) text-(--color-on-primary-soft);
+  @apply rounded-(--radius-full);
+}
+
+.no-devices {
+  @apply text-sm;
+  @apply text-(--color-text-muted);
+}
+
+.refresh-button {
+  @apply text-sm font-semibold;
+  @apply mt-3 min-h-11 px-3;
+  @apply text-(--color-primary);
+  @apply rounded-(--radius-sm) cursor-pointer;
+}
+
+.refresh-button:focus-visible {
+  @apply [outline:2px_solid_var(--color-primary)] outline-offset-2;
+}

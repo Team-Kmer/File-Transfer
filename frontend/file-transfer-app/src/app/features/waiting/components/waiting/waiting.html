@@ -10,6 +10,7 @@
     <p class="waiting-lead">On the other device, open the address below or enter the session code.</p>
     <app-room-invite [code]="room.code" [countdown]="roomWaitingService.countdown()"
                      [status]="roomWaitingService.statusLabel()"
+                     (openRoomEvent)="resolveOpenRoomEvent()"
                      (cancelSessionEvent)="resolveCancelSessionEvent()" />
   }
 </main>

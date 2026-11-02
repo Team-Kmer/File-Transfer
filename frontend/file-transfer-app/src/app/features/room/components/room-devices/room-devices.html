@@ -1,0 +1,16 @@
+<div class="devices-heading">
+  <h2 id="devices-title">Devices in this session</h2>
+  @if (room().maxDevices) {
+    <span class="device-counter">{{ room().devices.length }} / {{ room().maxDevices }}</span>
+  }
+</div>
+<ul class="devices" aria-labelledby="devices-title">
+  @for (device of devices(); track device.deviceId) {
+    <li class="device">
+      <span class="device-icon" aria-hidden="true">▣</span>
+      <span class="device-name">{{ device.displayName }}</span>
+      <span class="device-status">Joined</span>
+    </li>
+  } @empty { <li class="no-devices">No devices listed yet.</li> }
+</ul>
+<button class="refresh-button" type="button" (click)="fireRefreshEvent()">Refresh devices</button>

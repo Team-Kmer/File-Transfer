@@ -120,6 +120,18 @@
   @apply hidden;
 }
 
+.open-room {
+  @apply font-semibold;
+  @apply col-span-2;
+  @apply min-h-12 w-full px-5;
+  @apply bg-(--color-primary) text-(--color-on-primary);
+  @apply rounded-(--radius-full) cursor-pointer;
+}
+
+.open-room:hover {
+  @apply bg-(--color-primary-hover);
+}
+
 button:focus-visible,
 input:focus-visible {
   @apply [outline:2px_solid_var(--color-primary)] outline-offset-2;
