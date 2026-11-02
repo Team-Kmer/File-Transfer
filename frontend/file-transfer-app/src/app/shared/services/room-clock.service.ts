@@ -7,7 +7,8 @@ import { remainingMs, remainingTimeLabel } from '../../core/rooms/room-time';
 export class RoomClock {
   public readonly now = signal(Date.now());
 
-  private readonly clockSubscription = interval(1000).pipe(takeUntilDestroyed())
+  private readonly clockSubscription = interval(1000)
+    .pipe(takeUntilDestroyed())
     .subscribe(() => this.syncNow());
 
   public countdown(expiresAt: string): string {

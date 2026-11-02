@@ -56,7 +56,9 @@ export class RoomWaitingService {
   }
 
   private isRoomExpired(): boolean {
-    return this.room() !== null && this.roomClockService.isExpired(this.roomSessionService.expiresAt());
+    return (
+      this.room() !== null && this.roomClockService.isExpired(this.roomSessionService.expiresAt())
+    );
   }
 
   private getDisplayError(): string {

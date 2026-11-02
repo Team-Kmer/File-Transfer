@@ -21,9 +21,10 @@ export class RoomPage {
   private readonly routerService = inject(Router);
 
   private readonly code = toSignal(
-    this.activatedRouteService.paramMap.pipe(map(parameters => parameters.get('code') ?? '')),
+    this.activatedRouteService.paramMap.pipe(map((parameters) => parameters.get('code') ?? '')),
     { initialValue: '' },
   );
+
   private readonly joinRoomEffect = effect(() => {
     const code = this.code();
     untracked(() => this.roomViewService.joinRoom(code));
