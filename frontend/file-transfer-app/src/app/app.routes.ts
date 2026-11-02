@@ -9,6 +9,10 @@ export const routes: Routes = [
     path: 'room/:code/waiting',
     loadChildren: () => import('./features/waiting/waiting.routes').then(module => module.waitingRoutes),
   },
+  {
+    path: 'room/:code',
+    loadChildren: () => import('./features/room/room.routes').then(module => module.roomRoutes),
+  },
   {path: 'send', component: Send},
   {path: 'receive', component: Receive},
   {path: '**', redirectTo: ''}

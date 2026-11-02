@@ -15,6 +15,7 @@ export class RoomInvite {
   public readonly countdown = input.required<string>();
   public readonly status = input.required<string>();
   public readonly cancelSessionEvent = output<void>();
+  public readonly openRoomEvent = output<void>();
 
   protected readonly copyFeedback = signal('');
   protected readonly displayCode = computed(() => this.getDisplayCode());
@@ -31,6 +32,10 @@ export class RoomInvite {
 
   protected fireCancelSessionEvent(): void {
     this.cancelSessionEvent.emit();
+  }
+
+  protected fireOpenRoomEvent(): void {
+    this.openRoomEvent.emit();
   }
 
   private getDisplayCode(): string {

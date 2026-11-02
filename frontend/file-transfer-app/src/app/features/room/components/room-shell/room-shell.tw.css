@@ -1,0 +1,135 @@
+@reference 'tailwindcss';
+
+:host {
+  @apply block;
+  @apply w-full min-w-0;
+}
+
+.session-toolbar {
+  @apply flex flex-wrap items-center gap-x-5 gap-y-3;
+  @apply mb-6;
+}
+
+h1 {
+  @apply [font:var(--text-title)];
+  @apply mr-auto;
+}
+
+.session-code,
+.countdown {
+  @apply font-(family-name:--font-mono) whitespace-nowrap;
+}
+
+.session-code {
+  @apply ml-2;
+}
+
+.session-expiry {
+  @apply text-sm;
+  @apply text-(--color-text-muted);
+}
+
+.back-button,
+.choose-button {
+  @apply text-sm font-semibold;
+  @apply min-h-11 border px-4;
+  @apply border-(--color-border-strong) bg-(--color-surface);
+  @apply rounded-(--radius-full) cursor-pointer;
+}
+
+.room-grid {
+  @apply grid grid-cols-1 gap-5;
+}
+
+.room-left {
+  @apply flex flex-col gap-5;
+  @apply min-w-0;
+}
+
+.upload-placeholder {
+  @apply text-center;
+  @apply flex flex-col items-center justify-center gap-4;
+  @apply min-h-72 border border-dashed p-6;
+  @apply border-(--color-border-strong) bg-(--color-surface);
+  @apply rounded-(--radius-lg) [box-shadow:var(--shadow-sm)];
+}
+
+.upload-icon {
+  @apply text-3xl;
+  @apply flex items-center justify-center;
+  @apply size-16;
+  @apply bg-(--color-primary-soft) text-(--color-on-primary-soft);
+  @apply rounded-(--radius-lg);
+}
+
+.upload-placeholder h2 {
+  @apply [font:var(--text-title)];
+}
+
+.upload-placeholder p {
+  @apply text-sm;
+  @apply text-(--color-text-muted);
+}
+
+.choose-button:disabled {
+  @apply border-(--color-border) bg-(--color-surface-sunken) text-(--color-text-muted);
+  @apply cursor-not-allowed;
+}
+
+.session-files {
+  @apply flex flex-col;
+  @apply min-w-0 border p-5;
+  @apply border-(--color-border) bg-(--color-surface);
+  @apply rounded-(--radius-lg) [box-shadow:var(--shadow-sm)];
+}
+
+.session-files h2 {
+  @apply [font:var(--text-title)];
+  @apply flex items-center gap-3;
+  @apply mb-5;
+}
+
+.file-count {
+  @apply font-(family-name:--font-mono) text-xs;
+  @apply px-2 py-1;
+  @apply bg-(--color-surface-sunken) text-(--color-text-muted);
+  @apply rounded-(--radius-full);
+}
+
+.empty-files {
+  @apply text-center;
+  @apply flex flex-1 flex-col items-center justify-center gap-3;
+  @apply min-h-64 px-6 py-10;
+  @apply bg-(--color-bg);
+  @apply rounded-(--radius-lg);
+}
+
+.folder-icon {
+  @apply size-14 p-3;
+  @apply bg-(--color-surface-sunken) text-(--color-text-muted);
+  @apply rounded-(--radius-lg);
+}
+
+.empty-files h3 {
+  @apply text-base font-semibold;
+}
+
+.empty-files p {
+  @apply text-sm;
+  @apply max-w-64;
+  @apply text-(--color-text-muted);
+}
+
+button:focus-visible {
+  @apply [outline:2px_solid_var(--color-primary)] outline-offset-2;
+}
+
+@media (min-width: 768px) {
+  .room-grid {
+    @apply grid-cols-2;
+  }
+
+  .upload-placeholder {
+    @apply min-h-88;
+  }
+}

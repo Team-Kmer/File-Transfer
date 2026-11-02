@@ -1,31 +1,27 @@
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize, interval, Subscription } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
 import { AppError } from '../../../core/errors/app-error.model';
 import { roomErrorMessage } from '../../../core/rooms/room-error-message';
 import { RoomSessionService } from '../../../core/rooms/room-session.service';
-import { remainingMs, remainingTimeLabel } from '../../../core/rooms/room-time';
+import { RoomClock } from '../../../shared/services/room-clock.service';
 import { isValidRoomCode } from '../../../core/rooms/room-code.validator';
 
 @Injectable()
 export class RoomWaitingService {
   private readonly roomSessionService = inject(RoomSessionService);
   private readonly destroyRefService = inject(DestroyRef);
+  private readonly roomClockService = inject(RoomClock);
 
   public readonly room = this.roomSessionService.room.asReadonly();
-  public readonly now = signal(Date.now());
   public readonly isLoading = signal(false);
   public readonly error = signal('');
 
-  public readonly remaining = computed(() => this.getRemainingMs());
   public readonly isExpired = computed(() => this.isRoomExpired());
   public readonly displayError = computed(() => this.getDisplayError());
   public readonly countdown = computed(() => this.getCountdown());
   public readonly statusLabel = computed(() => this.getStatusLabel());
 
-  private readonly clockSubscription = interval(1000)
-    .pipe(takeUntilDestroyed())
-    .subscribe(() => this.now.set(Date.now()));
   private roomSubscription: Subscription | undefined;
 
   public loadRoom(code: string): void {
@@ -45,12 +41,8 @@ export class RoomWaitingService {
       .subscribe({ error: (error: AppError) => this.error.set(roomErrorMessage(error)) });
   }
 
-  private getRemainingMs(): number {
-    return remainingMs(this.roomSessionService.expiresAt(), this.now());
-  }
-
   private getCountdown(): string {
-    return remainingTimeLabel(this.remaining());
+    return this.roomClockService.countdown(this.roomSessionService.expiresAt());
   }
 
   private getStatusLabel(): string {
@@ -64,7 +56,7 @@ export class RoomWaitingService {
   }
 
   private isRoomExpired(): boolean {
-    return this.room() !== null && this.remaining() === 0;
+    return this.room() !== null && this.roomClockService.isExpired(this.roomSessionService.expiresAt());
   }
 
   private getDisplayError(): string {

@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 import { RoomSessionService } from '../../../../core/rooms/room-session.service';
+import { RoomClock } from '../../../../shared/services/room-clock.service';
 import { PageHeader } from '../../../../shared/components/page-header/page-header';
 import { RoomWaitingService } from '../../services/room-waiting.service';
 import { RoomInvite } from '../room-invite/room-invite';
@@ -12,7 +13,7 @@ import { RoomInvite } from '../room-invite/room-invite';
   imports: [PageHeader, RoomInvite],
   templateUrl: './waiting.html',
   styleUrls: ['./waiting.scss', './waiting.tw.css'],
-  providers: [RoomWaitingService],
+  providers: [RoomClock, RoomWaitingService],
 })
 export class Waiting {
   protected readonly roomWaitingService = inject(RoomWaitingService);
@@ -33,5 +34,9 @@ export class Waiting {
   protected resolveCancelSessionEvent(): void {
     this.roomSessionService.clearRoom();
     void this.routerService.navigate(['/']);
+  }
+
+  protected resolveOpenRoomEvent(): void {
+    void this.routerService.navigate(['/room', this.code()]);
   }
 }

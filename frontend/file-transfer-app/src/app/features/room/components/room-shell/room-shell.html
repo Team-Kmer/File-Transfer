@@ -1,0 +1,26 @@
+<div class="session-toolbar">
+  <h1>Session <span class="session-code">{{ room().code }}</span></h1>
+  <p class="session-expiry">Expires in <span class="countdown" aria-label="Time remaining">{{ countdown() }}</span></p>
+  <button class="back-button" type="button" (click)="fireBackEvent()">Back to home</button>
+</div>
+<div class="room-grid">
+  <div class="room-left">
+    <section class="upload-placeholder" aria-labelledby="upload-title">
+      <span class="upload-icon" aria-hidden="true">↑</span>
+      <h2 id="upload-title">Drop a file here</h2>
+      <p>File sharing will be available soon.</p>
+      <button class="choose-button" type="button" disabled>Choose a file</button>
+    </section>
+    <app-room-devices [room]="room()" [devices]="devices()" (refreshEvent)="onRefreshEvent()" />
+  </div>
+  <section class="session-files" aria-labelledby="files-title">
+    <h2 id="files-title">Session files <span class="file-count">0</span></h2>
+    <div class="empty-files">
+      <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H5a2 2 0 0 1-2-2Z" />
+      </svg>
+      <h3>No files yet</h3>
+      <p>Files shared in this session will appear here.</p>
+    </div>
+  </section>
+</div>

@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { RoomSessionService } from '../../../core/rooms/room-session.service';
 import { RoomWaitingService } from './room-waiting.service';
+import { RoomClock } from '../../../shared/services/room-clock.service';
 import { environment } from '../../../../environments/environment';
 
 describe('RoomWaitingService clock', () => {
@@ -10,7 +11,7 @@ describe('RoomWaitingService clock', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-02T12:00:00Z'));
     TestBed.configureTestingModule({
-      providers: [RoomWaitingService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [RoomClock, RoomWaitingService, provideHttpClient(), provideHttpClientTesting()],
     });
   });
 
@@ -35,11 +36,11 @@ describe('RoomWaitingService clock', () => {
   });
 
   it('stops updating time when destroyed', () => {
-    const service = TestBed.inject(RoomWaitingService);
-    const now = service.now();
+    const clock = TestBed.inject(RoomClock);
+    const now = clock.now();
     TestBed.resetTestingModule();
     vi.advanceTimersByTime(2000);
-    expect(service.now()).toBe(now);
+    expect(clock.now()).toBe(now);
   });
 
   it('clamps the countdown to zero and shows an expired state', () => {
