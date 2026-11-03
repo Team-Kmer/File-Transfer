@@ -97,12 +97,9 @@ public class ChunkedUploadService {
     }
 
     public void abort(UUID uploadId) {
-        UploadSession session = sessionsById.get(uploadId);
-        if (session == null) {
-            throw new UploadSessionNotFoundException("Upload session not found: " + uploadId);
-        }
-        if (session.status() == UploadStatus.ABORTED) {
-            throw new UploadStateConflictException("Upload session is aborted: " + uploadId);
+        UploadSession session = getById(uploadId);
+        if (session.status() == UploadStatus.ABORTED || session.status() == UploadStatus.COMPLETED) {
+            throw new UploadStateConflictException("Upload " + uploadId + " is " + session.status() + ", cannot be aborted");
         }
         session.markAborted();
         deleteRecursively(sessionDirectory(uploadId));

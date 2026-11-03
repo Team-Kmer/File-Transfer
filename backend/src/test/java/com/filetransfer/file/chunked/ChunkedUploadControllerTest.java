@@ -13,6 +13,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+
 import static org.hamcrest.Matchers.contains;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -163,16 +164,6 @@ class ChunkedUploadControllerTest {
         mockMvc.perform(delete("/api/files/upload/{uploadId}", "not-a-uuid"))
                 .andExpect(status().isBadRequest());
     }
-    private String initUpload(long sizeBytes) throws Exception {
-        MvcResult result = init(body("video.mp4", sizeBytes, ROOM));
-        return JsonPath.read(result.getResponse().getContentAsString(), "$.uploadId");
-    }
-
-    private ResultActions sendChunk(String uploadId, Object index, int size) throws Exception {
-        return mockMvc.perform(put("/api/files/upload/{uploadId}/chunks/{index}", uploadId, index)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .content(new byte[size]));
-    }
 
     @Test
     void put_chunk_returns_200_with_progress() throws Exception {
@@ -272,6 +263,14 @@ class ChunkedUploadControllerTest {
     }
 
     @Test
+    void delete_returns_409_when_upload_is_completed() throws Exception {
+        String uploadId = initUpload(100);
+        sendChunk(uploadId, 0, 100).andExpect(jsonPath("$.status").value("COMPLETED"));
+        mockMvc.perform(delete("/api/files/upload/{uploadId}", uploadId))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     void get_status_returns_received_indexes() throws Exception {
         String uploadId = initUpload(FIVE_MB + 10);
         sendChunk(uploadId, 1, 10).andExpect(status().isOk());
@@ -292,5 +291,16 @@ class ChunkedUploadControllerTest {
     void get_status_returns_404_when_upload_is_unknown() throws Exception {
         mockMvc.perform(get("/api/files/upload/{uploadId}", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
+    }
+
+    private String initUpload(long sizeBytes) throws Exception {
+        MvcResult result = init(body("video.mp4", sizeBytes, ROOM));
+        return JsonPath.read(result.getResponse().getContentAsString(), "$.uploadId");
+    }
+
+    private ResultActions sendChunk(String uploadId, Object index, int size) throws Exception {
+        return mockMvc.perform(put("/api/files/upload/{uploadId}/chunks/{index}", uploadId, index)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .content(new byte[size]));
     }
 }

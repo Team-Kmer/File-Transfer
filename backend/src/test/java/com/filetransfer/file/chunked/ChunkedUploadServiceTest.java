@@ -12,6 +12,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.util.unit.DataSize;
 import com.filetransfer.error.UploadStateConflictException;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -117,7 +118,7 @@ class ChunkedUploadServiceTest {
     }
 
     @Test
-    void initDoesNotCreateDirectoryWhenValidationFails(){
+    void initDoesNotCreateDirectoryWhenValidationFails() {
         assertThatThrownBy(() -> service.init(new InitUploadRequest("a.bat", 10L, null, ROOM, null)))
                 .isInstanceOf(UnsupportedFileTypeException.class);
 
@@ -142,5 +143,17 @@ class ChunkedUploadServiceTest {
     void abortRejectsUnknownId() {
         assertThatThrownBy(() -> service.abort(UUID.randomUUID()))
                 .isInstanceOf(UploadSessionNotFoundException.class);
+    }
+
+    @Test
+    void abortRejectsCompletedUpload() {
+        UploadSession session = service.init(new InitUploadRequest("a.txt", 10L, "text/plain", ROOM, null));
+        Path directory = tempDir.resolve("tmp").resolve(session.uploadId().toString());
+        service.receiveChunk(session.uploadId(), 0, new ByteArrayInputStream(new byte[10]));
+
+        assertThatThrownBy(() -> service.abort(session.uploadId()))
+                .isInstanceOf(UploadStateConflictException.class);
+        assertThat(session.status()).isEqualTo(UploadStatus.COMPLETED);
+        assertThat(directory.resolve("0.part")).exists();
     }
 }
