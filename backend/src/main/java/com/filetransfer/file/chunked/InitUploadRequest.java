@@ -8,6 +8,7 @@ public record InitUploadRequest(
         @NotBlank String filename,
         @NotNull @PositiveOrZero Long sizeBytes,
         String mimeType,
-        @NotBlank String roomCode
+        @NotBlank String roomCode,
+        String deviceId
 ) {
 }

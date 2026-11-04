@@ -177,7 +177,7 @@ Errors: `400` index out of range or wrong size, `409` upload already completed o
 
 ### `GET /api/files/upload/{uploadId}` — upload status
 
-**Planned S7.** Use it to resume: re-send only the missing indexes.
+**Implemented S7.** Use it to resume: re-send only the missing indexes.
 
 → `200`
 
@@ -200,7 +200,11 @@ Statuses: `INITIALIZED`, `IN_PROGRESS`, `COMPLETED` (adds `fileId`).
 
 ### `DELETE /api/files/upload/{uploadId}` — abort an upload
 
-**Implemented.** → `204`. An aborted upload no longer exists (`404` afterwards).
+**Implemented.** → `204`.
+
+Errors: 
+<br/>`404` unknown upload, 
+<br/>`409` upload already completed or aborted.
 
 ## Files of a room
 
