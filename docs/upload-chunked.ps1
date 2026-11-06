@@ -1,11 +1,11 @@
-# Manual test for FT-41: init, raw chunks, status, resume.
-# Usage: powershell -ExecutionPolicy Bypass -File .\docs\upload-chunked.ps1 -File .\docs\demo.mp4 -Skip 1
+# Manual test for FT-41/FT-42: init, raw chunks, status, resume, then download and compare SHA-256.
 param(
     [Parameter(Mandatory = $true)] [string] $File,
     [int[]] $Skip = @()
 )
 
 $ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
 Add-Type -AssemblyName System.Net.Http
 
 $baseUrl = "http://localhost:8080"
@@ -75,7 +75,24 @@ try {
     foreach ($index in (Get-Missing $status)) {
         Send-Chunk $index
     }
-    Show-Status (Invoke-RestMethod -Method Get -Uri "$api/$uploadId")
+        $final = Invoke-RestMethod -Method Get -Uri "$api/$uploadId"
+        Show-Status $final
+        if ($final.status -ne "COMPLETED") {
+            throw "Upload not completed: $($final.status)"
+        }
+
+        # Download the rebuilt file and compare its SHA-256 with the source
+        $downloaded = Join-Path ([System.IO.Path]::GetTempPath()) "$($final.fileId).download"
+        Invoke-WebRequest -Uri "$baseUrl/api/files/$($final.fileId)/download" -OutFile $downloaded
+        $sourceHash = (Get-FileHash -LiteralPath $fileInfo.FullName -Algorithm SHA256).Hash
+        $downloadedHash = (Get-FileHash -LiteralPath $downloaded -Algorithm SHA256).Hash
+        Remove-Item -LiteralPath $downloaded
+        Write-Host "Source SHA-256:     $sourceHash"
+        Write-Host "Downloaded SHA-256: $downloadedHash"
+        if ($sourceHash -ne $downloadedHash) {
+            throw "SHA-256 mismatch"
+        }
+        Write-Host "SHA-256 match, file $($final.fileId)" -ForegroundColor Green
 }
 finally {
     $stream.Dispose()
