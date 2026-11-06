@@ -36,6 +36,9 @@ public class Room {
     void addDevice(Device device) {
         this.devices.put(device.deviceId(), device);
     }
+    boolean hasDevice(String deviceId) {
+        return devices.containsKey(deviceId);
+    }
 
     boolean isExpiredAt(Instant now) {
         return !now.isBefore(expiresAt);
