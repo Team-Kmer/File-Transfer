@@ -44,8 +44,8 @@ public class ChunkedUploadController {
             @PathVariable int index,
             InputStream body
     ) {
-        uploadService.receiveChunk(uploadId, index, body);
-        return ResponseEntity.ok(ChunkReceivedResponse.from(uploadService.getById(uploadId), index));
+        UploadSession session = uploadService.receiveChunk(uploadId, index, body);
+        return ResponseEntity.ok(ChunkReceivedResponse.from(session, index));
     }
 
     @GetMapping("/{uploadId}")

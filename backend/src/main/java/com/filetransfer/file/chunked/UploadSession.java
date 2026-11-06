@@ -19,6 +19,7 @@ public class UploadSession {
     private final Set<Integer> chunksInProgress = ConcurrentHashMap.newKeySet();
     private final Instant createdAt;
     private volatile UploadStatus status;
+    private volatile UUID fileId;
 
     public UploadSession(UUID uploadId, String filename, long sizeBytes, String mimeType,
                          String roomCode, String deviceId, long chunkSize, int totalChunks, Instant createdAt) {
@@ -45,6 +46,7 @@ public class UploadSession {
     public Set<Integer> receivedChunks() { return receivedChunks; }
     public Instant createdAt() { return createdAt; }
     public UploadStatus status() { return status; }
+    public UUID fileId() { return fileId; }
 
     void markAborted() {
         this.status = UploadStatus.ABORTED;
@@ -61,7 +63,8 @@ public class UploadSession {
         return true;
     }
 
-    void markCompleted() {
+    void markCompleted(UUID fileId) {
+        this.fileId = fileId;
         this.status = UploadStatus.COMPLETED;
     }
 

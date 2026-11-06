@@ -63,9 +63,7 @@ class ChunkReceptionTest {
         send(1, 10);
 
         assertThat(session.receivedChunks()).containsExactlyInAnyOrder(0, 1, 2);
-        assertThat(part(0)).exists();
-        assertThat(part(1)).exists();
-        assertThat(part(2)).exists();
+        assertThat(session.fileId()).isNotNull();
         assertThat(session.status()).isEqualTo(UploadStatus.COMPLETED);
     }
 

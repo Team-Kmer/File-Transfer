@@ -293,6 +293,25 @@ class ChunkedUploadControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void completed_upload_is_downloadable_and_deletable_through_phase1_endpoints() throws Exception {
+        String uploadId = initUpload(100);
+        String response = sendChunk(uploadId, 0, 100)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.fileId").exists())
+                .andReturn().getResponse().getContentAsString();
+        String fileId = JsonPath.read(response, "$.fileId");
+
+        mockMvc.perform(get("/api/files/upload/{uploadId}", uploadId))
+                .andExpect(jsonPath("$.fileId").value(fileId));
+        mockMvc.perform(get("/api/files/{id}/download", fileId))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[100]));
+        mockMvc.perform(delete("/api/files/{id}", fileId))
+                .andExpect(status().isNoContent());
+    }
+
     private String initUpload(long sizeBytes) throws Exception {
         MvcResult result = init(body("video.mp4", sizeBytes, ROOM));
         return JsonPath.read(result.getResponse().getContentAsString(), "$.uploadId");

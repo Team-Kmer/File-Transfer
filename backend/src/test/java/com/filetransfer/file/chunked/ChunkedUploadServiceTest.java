@@ -151,12 +151,11 @@ class ChunkedUploadServiceTest {
     @Test
     void abortRejectsCompletedUpload() {
         UploadSession session = service.init(new InitUploadRequest("a.txt", 10L, "text/plain", ROOM, null));
-        Path directory = tempDir.resolve("tmp").resolve(session.uploadId().toString());
         service.receiveChunk(session.uploadId(), 0, new ByteArrayInputStream(new byte[10]));
 
         assertThatThrownBy(() -> service.abort(session.uploadId()))
                 .isInstanceOf(UploadStateConflictException.class);
         assertThat(session.status()).isEqualTo(UploadStatus.COMPLETED);
-        assertThat(directory.resolve("0.part")).exists();
+        assertThat(session.fileId()).isNotNull();
     }
 }

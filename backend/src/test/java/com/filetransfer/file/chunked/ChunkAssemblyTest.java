@@ -1,6 +1,5 @@
 package com.filetransfer.file.chunked;
 
-import com.filetransfer.error.UploadSessionNotFoundException;
 import com.filetransfer.file.FileMetadata;
 import com.filetransfer.file.FileStorageService;
 import com.filetransfer.file.StorageProperties;
@@ -10,7 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.util.unit.DataSize;
 
-import java.io.IOException;
+import org.junit.jupiter.api.RepeatedTest;
+import java.io.ByteArrayInputStream;import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -95,15 +95,15 @@ class ChunkAssemblyTest {
     }
 
     @Test
-    void completesSessionRemovesItAndDeletesTemporaryDirectory() throws IOException {
+    void completesSessionKeepsItWithFileIdAndDeletesTemporaryDirectory() throws IOException {
         UploadSession session = init("notes.txt", 10);
         writeParts(session, "abcd", "efgh", "ij");
 
         service.completeUpload(session);
 
         assertThat(session.status()).isEqualTo(UploadStatus.COMPLETED);
-        assertThatThrownBy(() -> service.getById(session.uploadId()))
-                .isInstanceOf(UploadSessionNotFoundException.class);
+        assertThat(session.fileId()).isEqualTo(singleStoredFile().id());
+        assertThat(service.getById(session.uploadId())).isEqualTo(session);
         assertThat(service.sessionDirectory(session.uploadId())).doesNotExist();
     }
 
@@ -170,12 +170,40 @@ class ChunkAssemblyTest {
         for (int index : arrivalOrder) {
             int from = index * CHUNK_SIZE;
             int to = Math.min(from + CHUNK_SIZE, source.length);
-            Files.write(part(session, index), Arrays.copyOfRange(source, from, to));
+            service.receiveChunk(session.uploadId(), index, new ByteArrayInputStream(source, from, to - from));
         }
 
-        service.completeUpload(session);
 
         assertThat(sha256(storedPath(singleStoredFile()))).isEqualTo(sha256(source));
+    }
+
+    @RepeatedTest(20)
+    void assemblesOnceWhenLastTwoChunksArriveConcurrently() throws Exception {
+        UploadSession session = init("notes.txt", 10);
+        send(session, 2, "ij");
+
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Future<UploadSession> first = pool.submit(() -> {
+                start.await();
+                return send(session, 0, "abcd");
+            });
+            Future<UploadSession> second = pool.submit(() -> {
+                start.await();
+                return send(session, 1, "efgh");
+            });
+            start.countDown();
+            first.get();
+            second.get();
+        } finally {
+            pool.shutdown();
+        }
+
+        FileMetadata stored = singleStoredFile();
+        assertThat(Files.readString(storedPath(stored))).isEqualTo("abcdefghij");
+        assertThat(session.status()).isEqualTo(UploadStatus.COMPLETED);
+        assertThat(session.fileId()).isEqualTo(stored.id());
     }
 
     private UploadSession init(String filename, long sizeBytes) {
@@ -224,5 +252,10 @@ class ChunkAssemblyTest {
             input.transferTo(OutputStream.nullOutputStream());
         }
         return HexFormat.of().formatHex(digest.digest());
+    }
+
+    private UploadSession send(UploadSession session, int index, String content) {
+        return service.receiveChunk(session.uploadId(), index,
+                new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
     }
 }

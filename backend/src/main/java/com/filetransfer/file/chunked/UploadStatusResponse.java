@@ -26,6 +26,6 @@ public record UploadStatusResponse(
                 session.chunkSize(),
                 session.totalChunks(),
                 receivedIndexes,
-                null);
+                session.fileId());
     }
 }

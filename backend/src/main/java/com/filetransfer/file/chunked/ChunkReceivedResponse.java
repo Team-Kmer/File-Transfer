@@ -20,6 +20,6 @@ public record ChunkReceivedResponse(
                 session.status(),
                 session.receivedChunks().size(),
                 session.totalChunks(),
-                null);
+                session.fileId());
     }
 }

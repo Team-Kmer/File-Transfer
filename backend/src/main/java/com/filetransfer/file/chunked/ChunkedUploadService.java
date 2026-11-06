@@ -1,4 +1,5 @@
 package com.filetransfer.file.chunked;
+import com.filetransfer.file.FileMetadata;
 
 import com.filetransfer.error.EmptyFileException;
 import com.filetransfer.error.FileTooLargeException;
@@ -104,9 +105,10 @@ public class ChunkedUploadService {
 
     public void abort(UUID uploadId) {
         UploadSession session = getById(uploadId);
-        if (session.status() == UploadStatus.ABORTED || session.status() == UploadStatus.COMPLETED) {
+        if (session.status() == UploadStatus.ABORTED || session.status() == UploadStatus.COMPLETED || session.status() == UploadStatus.ASSEMBLING) {
             throw new UploadStateConflictException("Upload " + uploadId + " is " + session.status() + ", cannot be aborted");
         }
+
         session.markAborted();
         deleteRecursively(sessionDirectory(uploadId));
     }
@@ -117,9 +119,8 @@ public class ChunkedUploadService {
         }
         Path directory = sessionDirectory(session.uploadId());
         try {
-            chunkAssembler.assemble(session, directory);
-            session.markCompleted();
-            sessionsById.remove(session.uploadId());
+            FileMetadata stored = chunkAssembler.assemble(session, directory);
+            session.markCompleted(stored.id());
         } catch (RuntimeException exception) {
             session.markFailed();
             logger.error("Assembly failed for upload {}", session.uploadId(), exception);
@@ -129,9 +130,11 @@ public class ChunkedUploadService {
     }
 
 
-    public void receiveChunk(UUID uploadId, int index, InputStream body) {
+    public UploadSession receiveChunk(UUID uploadId, int index, InputStream body) {
         UploadSession session = getById(uploadId);
-        if (session.status() == UploadStatus.ABORTED || session.status() == UploadStatus.COMPLETED) {
+        if (session.status() == UploadStatus.ABORTED
+                || session.status() == UploadStatus.COMPLETED
+                || session.status() == UploadStatus.FAILED) {
             throw new UploadStateConflictException(
                     "Upload " + uploadId + " is " + session.status() + ", no more chunks accepted");
         }
@@ -143,17 +146,22 @@ public class ChunkedUploadService {
             expectedSize = session.sizeBytes() - (long) (session.totalChunks() - 1) * session.chunkSize();
         }
         if (!session.claimChunk(index)) {
-            return;
+            return session;
         }
+        boolean allReceived;
         try {
             if (session.receivedChunks().contains(index)) {
-                return;
+                return session;
             }
             storeChunk(uploadId, index, body, expectedSize);
-            recordChunk(session, index);
+            allReceived = recordChunk(session, index);
         } finally {
             session.releaseChunk(index);
         }
+        if (allReceived) {
+            completeUpload(session);
+        }
+        return session;
     }
 
     private void storeChunk(UUID uploadId, int index, InputStream body, long expectedSize) {
@@ -196,14 +204,16 @@ public class ChunkedUploadService {
         return total;
     }
 
-    private void recordChunk(UploadSession session, int index) {
+    private boolean recordChunk(UploadSession session, int index) {
         synchronized (session) {
             session.receivedChunks().add(index);
             if (session.receivedChunks().size() == session.totalChunks()) {
-                session.markCompleted();
-            } else if (session.status() == UploadStatus.INITIALIZED) {
+                return true;
+            }
+            if (session.status() == UploadStatus.INITIALIZED) {
                 session.markInProgress();
             }
+            return false;
         }
     }
 
