@@ -9,6 +9,8 @@ import com.filetransfer.error.UploadSessionNotFoundException;
 import com.filetransfer.error.UploadStateConflictException;
 import com.filetransfer.rooms.RoomService;
 import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -28,22 +30,26 @@ import java.util.stream.Stream;
 public class ChunkedUploadService {
 
     private static final String DEFAULT_MIME_TYPE = "application/octet-stream";
+    private static final Logger logger = LoggerFactory.getLogger(ChunkedUploadService.class);
 
     private final Path tmpPath;
     private final long chunkSize;
     private final long maxFileSize;
     private final RoomService roomService;
     private final FileTypeValidator fileTypeValidator;
+    private final ChunkAssembler chunkAssembler;
     private final Map<UUID, UploadSession> sessionsById = new ConcurrentHashMap<>();
 
     public ChunkedUploadService(ChunkedUploadProperties properties,
                                 RoomService roomService,
-                                FileTypeValidator fileTypeValidator) {
+                                FileTypeValidator fileTypeValidator,
+                                ChunkAssembler chunkAssembler) {
         this.tmpPath = properties.path().resolve("tmp");
         this.chunkSize = properties.chunkSize().toBytes();
         this.maxFileSize = properties.maxFileSize().toBytes();
         this.roomService = roomService;
         this.fileTypeValidator = fileTypeValidator;
+        this.chunkAssembler = chunkAssembler;
     }
 
     public UploadSession init(@NonNull InitUploadRequest request) {
@@ -104,6 +110,24 @@ public class ChunkedUploadService {
         session.markAborted();
         deleteRecursively(sessionDirectory(uploadId));
     }
+
+    void completeUpload(UploadSession session) {
+        if (!session.markAssembling()) {
+            return;
+        }
+        Path directory = sessionDirectory(session.uploadId());
+        try {
+            chunkAssembler.assemble(session, directory);
+            session.markCompleted();
+            sessionsById.remove(session.uploadId());
+        } catch (RuntimeException exception) {
+            session.markFailed();
+            logger.error("Assembly failed for upload {}", session.uploadId(), exception);
+        } finally {
+            deleteDirectoryQuietly(directory);
+        }
+    }
+
 
     public void receiveChunk(UUID uploadId, int index, InputStream body) {
         UploadSession session = getById(uploadId);
@@ -195,6 +219,15 @@ public class ChunkedUploadService {
         }
         return name;
     }
+
+    private void deleteDirectoryQuietly(Path directory) {
+        try {
+            deleteRecursively(directory);
+        } catch (IllegalStateException exception) {
+            logger.warn("Could not clean up upload directory {}", directory, exception);
+        }
+    }
+
 
     private void deleteRecursively(Path directory) {
         if (!Files.exists(directory)) {

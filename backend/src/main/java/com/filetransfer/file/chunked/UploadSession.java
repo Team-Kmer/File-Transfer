@@ -50,12 +50,29 @@ public class UploadSession {
         this.status = UploadStatus.ABORTED;
     }
 
-    void markInProgress() {
-        this.status = UploadStatus.IN_PROGRESS;
+    synchronized boolean markAssembling() {
+        if (this.status == UploadStatus.ASSEMBLING
+        || this.status == UploadStatus.COMPLETED
+        || this.status == UploadStatus.FAILED
+        || this.status == UploadStatus.ABORTED) {
+            return false;
+        }
+        this.status = UploadStatus.ASSEMBLING;
+        return true;
     }
+
     void markCompleted() {
         this.status = UploadStatus.COMPLETED;
     }
+
+    void markFailed() {
+        this.status = UploadStatus.FAILED;
+    }
+
+    void markInProgress() {
+        this.status = UploadStatus.IN_PROGRESS;
+    }
+
     boolean claimChunk(int index) {
         return chunksInProgress.add(index);
     }
