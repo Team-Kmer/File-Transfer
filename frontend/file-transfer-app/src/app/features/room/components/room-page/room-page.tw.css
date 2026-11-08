@@ -1,0 +1,43 @@
+@reference 'tailwindcss';
+
+:host {
+  @apply flex flex-col;
+  @apply min-h-svh w-full;
+}
+
+.room-main {
+  @apply flex flex-1 flex-col items-center;
+  @apply mx-auto w-full max-w-[1280px] px-5 py-6;
+}
+
+.loading,
+.outcome {
+  @apply text-center;
+  @apply mt-16 mb-6 max-w-lg;
+}
+
+.outcome h1 {
+  @apply [font:var(--text-display-lg)];
+  @apply mb-4;
+}
+
+.outcome p {
+  @apply text-(--color-text-muted);
+}
+
+.back-button {
+  @apply font-semibold;
+  @apply min-h-12 border px-6;
+  @apply border-(--color-border-strong) bg-(--color-surface) text-(--color-text);
+  @apply rounded-(--radius-full) cursor-pointer;
+}
+
+.back-button:focus-visible {
+  @apply [outline:2px_solid_var(--color-primary)] outline-offset-2;
+}
+
+@media (min-width: 768px) {
+  .room-main {
+    @apply px-8 py-8;
+  }
+}

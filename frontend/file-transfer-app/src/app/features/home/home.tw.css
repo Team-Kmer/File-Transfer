@@ -1,21 +1,19 @@
-@reference "tailwindcss";
+@reference 'tailwindcss';
 
-.content{
-  @apply flex flex-col items-center;
-  @apply w-full;
+:host {
+  @apply flex flex-col;
+  @apply min-h-svh w-full;
+  @apply text-(--color-text);
 }
 
-.title {
-  font: var(--text-display-xl);
+.home-main {
+  @apply grid flex-1 grid-cols-1 grid-rows-[1fr_auto] gap-8;
+  @apply mx-auto w-full max-w-[1120px] px-5 pt-8 pb-6;
 }
 
-.sub-title {
-  @apply py-4;
-  @apply text-(--color-text-muted);
-}
-
-.button{
-  @apply flex justify-center items-center gap-4;
-  @apply py-4;
-  @apply w-full;
+@media (min-width: 768px) {
+  .home-main {
+    @apply grid-cols-2 grid-rows-1 items-center gap-16;
+    @apply px-8 pt-12 pb-10;
+  }
 }

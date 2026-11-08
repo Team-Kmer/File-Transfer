@@ -1,0 +1,16 @@
+<app-page-header [status]="roomWaitingService.statusLabel()" />
+<main class="waiting-main">
+  @if (roomWaitingService.isLoading()) {
+    <p class="loading-message" role="status">Loading session…</p>
+  } @else if (roomWaitingService.displayError(); as error) {
+    <p class="session-error" role="alert">{{ error }}</p>
+    <button class="cancel-button" type="button" (click)="resolveCancelSessionEvent()">Back to home</button>
+  } @else if (roomWaitingService.room(); as room) {
+    <h1 class="waiting-title">Invite the other device</h1>
+    <p class="waiting-lead">On the other device, open the address below or enter the session code.</p>
+    <app-room-invite [code]="room.code" [countdown]="roomWaitingService.countdown()"
+                     [status]="roomWaitingService.statusLabel()"
+                     (openRoomEvent)="resolveOpenRoomEvent()"
+                     (cancelSessionEvent)="resolveCancelSessionEvent()" />
+  }
+</main>

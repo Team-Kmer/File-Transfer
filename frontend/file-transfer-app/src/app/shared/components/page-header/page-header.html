@@ -1,0 +1,23 @@
+<a class="brand" routerLink="/" aria-label="File Transfer, home">
+  <svg class="brand-icon" aria-hidden="true"><use href="/icons/session-home.svg#transfer" /></svg>
+  <span class="brand-text">File Transfer</span>
+</a>
+@if (hasStatus()) { <p class="status-badge" role="status">{{ status() }}</p> }
+<div class="header-actions">
+  <button class="icon-button" type="button" aria-label="Dark theme (coming soon)" disabled>
+    <svg class="icon" aria-hidden="true"><use href="/icons/session-home.svg#moon" /></svg>
+  </button>
+  <span class="language"><svg class="icon" aria-hidden="true"><use href="/icons/session-home.svg#globe" /></svg> EN
+    <svg class="icon" aria-hidden="true"><use href="/icons/session-home.svg#chevron" /></svg>
+  </span>
+  <button class="menu-button" type="button" aria-label="Open menu" aria-controls="home-menu"
+          [attr.aria-expanded]="isMenuOpen()" (click)="toggleMenu()">
+    <svg class="icon mobile-icon" aria-hidden="true"><use href="/icons/session-home.svg#menu" /></svg>
+    <svg class="icon desktop-icon" aria-hidden="true"><use [attr.href]="desktopMenuIcon()" /></svg>
+  </button>
+</div>
+<nav id="home-menu" class="legacy-links" [class.is-open]="isMenuOpen()" aria-label="Phase 1 pages">
+  <a class="legacy-link" routerLink="/" fragment="how-it-works-title" (click)="closeMenu()">How it works</a>
+  <a class="legacy-link" routerLink="/send">Send</a>
+  <a class="legacy-link" routerLink="/receive">Receive</a>
+</nav>

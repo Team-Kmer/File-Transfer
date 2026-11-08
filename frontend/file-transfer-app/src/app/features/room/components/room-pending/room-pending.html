@@ -1,0 +1,9 @@
+<span class="pending-icon" aria-hidden="true">…</span>
+<h1>Waiting for the host</h1>
+<p class="lead" role="status">The host needs to approve your request before you can enter.</p>
+<section class="request-details" aria-label="Join request">
+  <p class="detail-label">Session</p><p class="session-code">{{ code() }}</p>
+  <p class="detail-label">You appear as</p><p class="device-name">{{ deviceName() }}</p>
+</section>
+<p class="hint">Keep this page open while the host reviews your request.</p>
+<button class="back-button" type="button" (click)="fireBackEvent()">Cancel request</button>

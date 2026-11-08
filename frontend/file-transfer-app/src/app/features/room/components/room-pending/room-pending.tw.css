@@ -1,0 +1,61 @@
+@reference 'tailwindcss';
+
+:host {
+  @apply flex flex-col items-center;
+  @apply mx-auto w-full max-w-md pt-8 pb-6;
+}
+
+.pending-icon {
+  @apply text-4xl text-center;
+  @apply mb-6 size-18;
+  @apply bg-(--color-warning-soft) text-(--color-on-warning-soft);
+  @apply rounded-(--radius-lg);
+}
+
+h1 {
+  @apply [font:var(--text-display-lg)] text-center;
+  @apply mb-4;
+}
+
+.lead,
+.hint {
+  @apply text-center;
+  @apply text-(--color-text-muted);
+}
+
+.request-details {
+  @apply text-center;
+  @apply my-6 w-full border p-6;
+  @apply border-(--color-border) bg-(--color-surface);
+  @apply rounded-(--radius-lg) [box-shadow:var(--shadow-sm)];
+}
+
+.detail-label {
+  @apply text-sm;
+  @apply text-(--color-text-muted);
+}
+
+.session-code {
+  @apply font-(family-name:--font-mono) text-3xl font-semibold tracking-widest;
+  @apply mt-2 mb-6;
+}
+
+.device-name {
+  @apply font-semibold break-words;
+  @apply mt-2;
+}
+
+.hint {
+  @apply text-sm;
+}
+
+.back-button {
+  @apply font-semibold;
+  @apply mt-6 min-h-12 w-full border px-5;
+  @apply border-(--color-border-strong) bg-(--color-surface);
+  @apply rounded-(--radius-full) cursor-pointer;
+}
+
+.back-button:focus-visible {
+  @apply [outline:2px_solid_var(--color-primary)] outline-offset-2;
+}

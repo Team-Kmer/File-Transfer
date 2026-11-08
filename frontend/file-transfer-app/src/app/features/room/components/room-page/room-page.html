@@ -1,0 +1,31 @@
+<app-page-header [status]="roomViewService.statusLabel()" />
+<main class="room-main">
+  @let state = roomViewService.state();
+  @switch (state.kind) {
+    @case ('loading') { <p class="loading" role="status">Joining session…</p> }
+    @case ('room') {
+      <app-room-shell [room]="state.room" [countdown]="roomViewService.countdown()"
+                      [devices]="roomViewService.devices()"
+                      (refreshEvent)="resolveRefreshEvent()" (backEvent)="resolveBackEvent()" />
+    }
+    @case ('pending') {
+      <app-room-pending [code]="state.code" [deviceName]="roomViewService.deviceName"
+                        (backEvent)="resolveBackEvent()" />
+    }
+    @case ('full') {
+      <section class="outcome" role="alert"><h1>Session full</h1>
+        <p>This session has reached its device limit.</p></section>
+      <button class="back-button" type="button" (click)="resolveBackEvent()">Back to home</button>
+    }
+    @case ('notFound') {
+      <section class="outcome" role="alert"><h1>Unknown or expired code</h1>
+        <p>Check the code or ask the host to create a new session.</p></section>
+      <button class="back-button" type="button" (click)="resolveBackEvent()">Back to home</button>
+    }
+    @case ('error') {
+      <section class="outcome" role="alert"><h1>Unable to join the session</h1>
+        <p>{{ state.message }}</p></section>
+      <button class="back-button" type="button" (click)="resolveBackEvent()">Back to home</button>
+    }
+  }
+</main>

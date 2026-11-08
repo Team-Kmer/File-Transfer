@@ -1,0 +1,79 @@
+@reference 'tailwindcss';
+
+:host {
+  @apply block;
+  @apply min-w-0;
+}
+
+.steps-title,
+.step-description,
+.expiry-note {
+  @apply hidden;
+  @apply text-(--color-text-muted);
+}
+
+.steps {
+  @apply list-none;
+  @apply grid grid-cols-3 gap-2;
+  @apply m-0 p-0;
+}
+
+.step {
+  @apply flex flex-col items-start gap-1;
+  @apply min-h-20 border p-3;
+  @apply border-(--color-border) bg-(--color-surface);
+  @apply rounded-(--radius-md);
+}
+
+.step-number {
+  @apply font-(family-name:--font-mono) text-xs/[1.45] font-semibold;
+  @apply text-(--color-primary);
+}
+
+.step-title {
+  @apply font-(family-name:--font-body) text-sm/[1.2] font-bold;
+}
+
+.icon {
+  @apply shrink-0;
+  @apply size-4;
+}
+
+@media (min-width: 768px) {
+  .steps-title {
+    @apply text-sm font-bold;
+    @apply block;
+    @apply mb-4;
+  }
+
+  .steps {
+    @apply grid-cols-1 gap-3;
+  }
+
+  .step {
+    @apply flex-row gap-4;
+    @apply min-h-22 p-5;
+    @apply rounded-(--radius-lg);
+  }
+
+  .step-number {
+    @apply text-sm;
+    @apply pt-1;
+  }
+
+  .step-title {
+    @apply text-lg/[1.4];
+  }
+
+  .step-description {
+    @apply text-[15px]/[1.45];
+    @apply block;
+  }
+
+  .expiry-note {
+    @apply text-[13px]/[1.45];
+    @apply flex items-center gap-2;
+    @apply mt-6;
+  }
+
+}

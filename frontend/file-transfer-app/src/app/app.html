@@ -1,4 +1,2 @@
-<div class="main">
-  <router-outlet></router-outlet>
-</div>
+<router-outlet #outlet="outlet" (activate)="resolveActivateEvent(outlet)"></router-outlet>
 
