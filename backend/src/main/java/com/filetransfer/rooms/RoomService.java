@@ -54,6 +54,9 @@ public class RoomService {
         room.addDevice(newDevice);
         return room;
     }
+    public boolean isMember(String code, String deviceId) {
+        return exists(code) && roomsByCode.get(code).hasDevice(deviceId);
+    }
 
     public boolean exists(String code) {
         validateCode(code);
