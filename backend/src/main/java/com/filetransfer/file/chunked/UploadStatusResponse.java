@@ -22,7 +22,7 @@ public record UploadStatusResponse(
                 session.uploadId(),
                 session.filename(),
                 session.sizeBytes(),
-                session.status(),
+                session.status().visibleStatus(),
                 session.chunkSize(),
                 session.totalChunks(),
                 receivedIndexes,
