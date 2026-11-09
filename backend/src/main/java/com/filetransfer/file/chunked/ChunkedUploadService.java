@@ -1,5 +1,6 @@
 package com.filetransfer.file.chunked;
 import com.filetransfer.file.FileMetadata;
+import com.filetransfer.file.FileRegisteredEvent;
 
 import com.filetransfer.error.EmptyFileException;
 import com.filetransfer.error.FileTooLargeException;
@@ -8,11 +9,13 @@ import com.filetransfer.error.RoomNotFoundException;
 import com.filetransfer.error.UnsupportedFileTypeException;
 import com.filetransfer.error.UploadSessionNotFoundException;
 import com.filetransfer.error.UploadStateConflictException;
+import com.filetransfer.error.ChunkAssemblyException;
 import com.filetransfer.rooms.RoomService;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,18 +42,20 @@ public class ChunkedUploadService {
     private final RoomService roomService;
     private final FileTypeValidator fileTypeValidator;
     private final ChunkAssembler chunkAssembler;
+    private final ApplicationEventPublisher eventPublisher;
     private final Map<UUID, UploadSession> sessionsById = new ConcurrentHashMap<>();
 
     public ChunkedUploadService(ChunkedUploadProperties properties,
                                 RoomService roomService,
                                 FileTypeValidator fileTypeValidator,
-                                ChunkAssembler chunkAssembler) {
+                                ChunkAssembler chunkAssembler, ApplicationEventPublisher eventPublisher) {
         this.tmpPath = properties.path().resolve("tmp");
         this.chunkSize = properties.chunkSize().toBytes();
         this.maxFileSize = properties.maxFileSize().toBytes();
         this.roomService = roomService;
         this.fileTypeValidator = fileTypeValidator;
         this.chunkAssembler = chunkAssembler;
+        this.eventPublisher = eventPublisher;
     }
 
     public UploadSession init(@NonNull InitUploadRequest request) {
@@ -105,11 +110,10 @@ public class ChunkedUploadService {
 
     public void abort(UUID uploadId) {
         UploadSession session = getById(uploadId);
-        if (session.status() == UploadStatus.ABORTED || session.status() == UploadStatus.COMPLETED || session.status() == UploadStatus.ASSEMBLING) {
-            throw new UploadStateConflictException("Upload " + uploadId + " is " + session.status() + ", cannot be aborted");
+        if (!session.markAborted()) {
+            throw new UploadStateConflictException(
+                    "Upload " + uploadId + " is " + session.status() + ", cannot be aborted");
         }
-
-        session.markAborted();
         deleteRecursively(sessionDirectory(uploadId));
     }
 
@@ -118,15 +122,18 @@ public class ChunkedUploadService {
             return;
         }
         Path directory = sessionDirectory(session.uploadId());
+        FileMetadata stored;
         try {
-            FileMetadata stored = chunkAssembler.assemble(session, directory);
+            stored = chunkAssembler.assemble(session, directory);
             session.markCompleted(stored.id());
         } catch (RuntimeException exception) {
             session.markFailed();
             logger.error("Assembly failed for upload {}", session.uploadId(), exception);
+            throw new ChunkAssemblyException("Could not assemble upload " + session.uploadId(), exception);
         } finally {
             deleteDirectoryQuietly(directory);
         }
+        eventPublisher.publishEvent(new FileRegisteredEvent(stored));
     }
 
 

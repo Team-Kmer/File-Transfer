@@ -33,7 +33,7 @@ class ChunkAssemblyLargeFileTest {
 
     private static final String ROOM = "123456";
     private static final int CHUNK_SIZE = 5 * 1024 * 1024;
-    private static final int TOTAL_CHUNKS = 100;
+    private static final int TOTAL_CHUNKS = Integer.getInteger("largeChunks", 100);
     private static final long FILE_SIZE = (long) CHUNK_SIZE * TOTAL_CHUNKS;
 
     @TempDir
@@ -51,7 +51,7 @@ class ChunkAssemblyLargeFileTest {
         when(roomService.exists(ROOM)).thenReturn(true);
         FileStorageService storageService = new FileStorageService(new StorageProperties(tempDir));
         ChunkedUploadService service = new ChunkedUploadService(
-                properties, roomService, new FileTypeValidator(properties), new ChunkAssembler(storageService));
+                properties, roomService, new FileTypeValidator(properties), new ChunkAssembler(storageService), event -> {});
         UploadSession session = service.init(
                 new InitUploadRequest("large.bin", FILE_SIZE, "application/octet-stream", ROOM, null));
 
@@ -64,7 +64,10 @@ class ChunkAssemblyLargeFileTest {
             Files.write(service.sessionDirectory(session.uploadId()).resolve(index + ".part"), buffer);
         }
 
+        long start = System.nanoTime();
         service.completeUpload(session);
+        long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+        System.out.printf("Assembled %d MB in %d ms%n", FILE_SIZE / (1024 * 1024), elapsedMs);
 
         assertThat(session.status()).isEqualTo(UploadStatus.COMPLETED);
         FileMetadata stored = storageService.findAll().getFirst();

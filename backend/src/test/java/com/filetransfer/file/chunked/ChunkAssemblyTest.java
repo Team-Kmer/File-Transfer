@@ -1,4 +1,6 @@
 package com.filetransfer.file.chunked;
+import com.filetransfer.file.FileRegisteredEvent;
+import com.filetransfer.error.ChunkAssemblyException;
 
 import com.filetransfer.file.FileMetadata;
 import com.filetransfer.file.FileStorageService;
@@ -46,6 +48,7 @@ class ChunkAssemblyTest {
 
     private FileStorageService storageService;
     private ChunkedUploadService service;
+    private final List<Object> events = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
@@ -58,7 +61,7 @@ class ChunkAssemblyTest {
         when(roomService.exists(ROOM)).thenReturn(true);
         storageService = new FileStorageService(new StorageProperties(tempDir));
         service = new ChunkedUploadService(
-                properties, roomService, new FileTypeValidator(properties), new ChunkAssembler(storageService));
+                properties, roomService, new FileTypeValidator(properties), new ChunkAssembler(storageService), events::add);
     }
 
     @Test
@@ -113,7 +116,8 @@ class ChunkAssemblyTest {
         writePart(session, 0, "abcd");
         writePart(session, 2, "ij");
 
-        service.completeUpload(session);
+        assertThatThrownBy(() -> service.completeUpload(session))
+                .isInstanceOf(ChunkAssemblyException.class);
 
         assertFailedWithoutStoredFile(session);
     }
@@ -123,7 +127,8 @@ class ChunkAssemblyTest {
         UploadSession session = init("notes.txt", 10);
         writeParts(session, "abcd", "efgh", "ijk");
 
-        service.completeUpload(session);
+        assertThatThrownBy(() -> service.completeUpload(session))
+                .isInstanceOf(ChunkAssemblyException.class);
 
         assertFailedWithoutStoredFile(session);
     }
@@ -175,6 +180,28 @@ class ChunkAssemblyTest {
 
 
         assertThat(sha256(storedPath(singleStoredFile()))).isEqualTo(sha256(source));
+    }
+
+    @Test
+    void publishesFileRegisteredEventAfterRegistration() throws IOException {
+        UploadSession session = init("notes.txt", 10);
+        writeParts(session, "abcd", "efgh", "ij");
+
+        service.completeUpload(session);
+
+        assertThat(events).containsExactly(new FileRegisteredEvent(singleStoredFile()));
+    }
+
+    @Test
+    void storesRoomCodeAndUploaderInMetadata() throws IOException {
+        UploadSession session = service.init(new InitUploadRequest("notes.txt", 10L, "text/plain", ROOM, "device-1"));
+        writeParts(session, "abcd", "efgh", "ij");
+
+        service.completeUpload(session);
+
+        FileMetadata stored = singleStoredFile();
+        assertThat(stored.roomCode()).isEqualTo(ROOM);
+        assertThat(stored.uploadedBy()).isEqualTo("device-1");
     }
 
     @RepeatedTest(20)
@@ -235,6 +262,7 @@ class ChunkAssemblyTest {
     }
 
     private void assertFailedWithoutStoredFile(UploadSession session) throws IOException {
+        assertThat(events).isEmpty();
         assertThat(session.status()).isEqualTo(UploadStatus.FAILED);
         assertThat(storageService.findAll()).isEmpty();
         try (var entries = Files.list(tempDir)) {

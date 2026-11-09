@@ -54,6 +54,10 @@ public class FileStorageService {
 
 
     public FileMetadata store(String originalName, String mimeType, ContentWriter content) {
+        return store(originalName, mimeType, null, null, content);
+    }
+
+    public FileMetadata store(String originalName, String mimeType, String roomCode, String uploadedBy, ContentWriter content) {
         UUID id = UUID.randomUUID();
         String storedFilename = id + extractExtension(originalName);
         Path targetPath = storagePath.resolve(storedFilename);
@@ -75,7 +79,9 @@ public class FileStorageService {
                 size,
                 Instant.now(),
                 mimeType,
-                storedFilename);
+                storedFilename,
+                roomCode,
+                uploadedBy);
 
         metadataById.put(id, metadata);
         return metadata;

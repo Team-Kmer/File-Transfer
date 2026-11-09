@@ -48,8 +48,14 @@ public class UploadSession {
     public UploadStatus status() { return status; }
     public UUID fileId() { return fileId; }
 
-    void markAborted() {
+    synchronized boolean markAborted() {
+        if (this.status == UploadStatus.ABORTED
+                || this.status == UploadStatus.COMPLETED
+                || this.status == UploadStatus.ASSEMBLING) {
+            return false;
+        }
         this.status = UploadStatus.ABORTED;
+        return true;
     }
 
     synchronized boolean markAssembling() {

@@ -6,5 +6,9 @@ public enum UploadStatus {
     COMPLETED,
     ASSEMBLING,
     FAILED,
-    ABORTED
+    ABORTED;
+
+    public UploadStatus visibleStatus() {
+        return this == ASSEMBLING ? IN_PROGRESS : this;
+    }
 }

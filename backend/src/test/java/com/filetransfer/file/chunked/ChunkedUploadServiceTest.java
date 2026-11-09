@@ -45,7 +45,7 @@ class ChunkedUploadServiceTest {
         RoomService roomService = mock(RoomService.class);
         when(roomService.exists(ROOM)).thenReturn(true);
         ChunkAssembler assembler = new ChunkAssembler(new FileStorageService(new StorageProperties(tempDir)));
-        service = new ChunkedUploadService(properties, roomService, new FileTypeValidator(properties), assembler);
+        service = new ChunkedUploadService(properties, roomService, new FileTypeValidator(properties), assembler, event -> {});
     }
 
     @Test
@@ -157,5 +157,15 @@ class ChunkedUploadServiceTest {
                 .isInstanceOf(UploadStateConflictException.class);
         assertThat(session.status()).isEqualTo(UploadStatus.COMPLETED);
         assertThat(session.fileId()).isNotNull();
+    }
+
+    @Test
+    void abortRejectsUploadBeingAssembled() {
+        UploadSession session = service.init(new InitUploadRequest("a.txt", 10L, "text/plain", ROOM, null));
+        session.markAssembling();
+
+        assertThatThrownBy(() -> service.abort(session.uploadId()))
+                .isInstanceOf(UploadStateConflictException.class);
+        assertThat(session.status()).isEqualTo(UploadStatus.ASSEMBLING);
     }
 }

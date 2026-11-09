@@ -26,7 +26,8 @@ public class ChunkAssembler {
                 .toList();
         verifyParts(parts, session.sizeBytes());
 
-        return storageService.store(session.filename(), session.mimeType(), output -> {
+        return storageService.store(session.filename(), session.mimeType(), session.roomCode(),
+                session.deviceId(), output -> {
             for (Path part : parts) {
                 Files.copy(part, output);
             }

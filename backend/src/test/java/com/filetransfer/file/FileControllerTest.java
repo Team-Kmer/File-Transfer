@@ -49,10 +49,10 @@ class FileControllerTest {
     void returns_files_sorted_by_uploadedAt_descending() throws Exception {
         FileMetadata older = new FileMetadata(
                 UUID.randomUUID(), "new.pdf", 20L,
-                Instant.parse("2026-01-01T10:00:00Z"), "application/pdf", "uuid2.pdf");
+                Instant.parse("2026-01-01T10:00:00Z"), "application/pdf", "uuid2.pdf", null, null);
         FileMetadata newer = new FileMetadata(
                 UUID.randomUUID(), "old.txt", 10L,
-                Instant.parse("2026-06-01T10:00:00Z"), "text/plain", "uuid1.txt");
+                Instant.parse("2026-06-01T10:00:00Z"), "text/plain", "uuid1.txt", null, null);
         when(storageService.findAllMostRecentFirst()).thenReturn(List.of(older, newer));
 
         mockMvc.perform(get("/api/files"))
@@ -77,7 +77,7 @@ class FileControllerTest {
                 "hello.txt",
                 5L,
                 Instant.parse("2026-06-01T10:00:00Z"),
-                "text/plain", "uuid.txt");
+                "text/plain", "uuid.txt", null, null);
 
         when(storageService.store(any(MultipartFile.class))).thenReturn(stored);
 
@@ -108,7 +108,7 @@ class FileControllerTest {
         UUID id = UUID.randomUUID();
         FileMetadata metadata = new FileMetadata(
                 id, "hello.txt", 5L,
-                Instant.parse("2026-06-01T10:00:00Z"), "text/plain", "uuid.txt");
+                Instant.parse("2026-06-01T10:00:00Z"), "text/plain", "uuid.txt", null, null);
 
         when(storageService.getById(id)).thenReturn(metadata);
         when(storageService.loadAsResource(metadata))
