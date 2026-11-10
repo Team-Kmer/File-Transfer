@@ -19,6 +19,7 @@ public class UploadSession {
     private final Set<Integer> chunksInProgress = ConcurrentHashMap.newKeySet();
     private final Instant createdAt;
     private volatile UploadStatus status;
+    private volatile UUID fileId;
 
     public UploadSession(UUID uploadId, String filename, long sizeBytes, String mimeType,
                          String roomCode, String deviceId, long chunkSize, int totalChunks, Instant createdAt) {
@@ -45,17 +46,42 @@ public class UploadSession {
     public Set<Integer> receivedChunks() { return receivedChunks; }
     public Instant createdAt() { return createdAt; }
     public UploadStatus status() { return status; }
+    public UUID fileId() { return fileId; }
 
-    void markAborted() {
+    synchronized boolean markAborted() {
+        if (this.status == UploadStatus.ABORTED
+                || this.status == UploadStatus.COMPLETED
+                || this.status == UploadStatus.ASSEMBLING) {
+            return false;
+        }
         this.status = UploadStatus.ABORTED;
+        return true;
+    }
+
+    synchronized boolean markAssembling() {
+        if (this.status == UploadStatus.ASSEMBLING
+        || this.status == UploadStatus.COMPLETED
+        || this.status == UploadStatus.FAILED
+        || this.status == UploadStatus.ABORTED) {
+            return false;
+        }
+        this.status = UploadStatus.ASSEMBLING;
+        return true;
+    }
+
+    void markCompleted(UUID fileId) {
+        this.fileId = fileId;
+        this.status = UploadStatus.COMPLETED;
+    }
+
+    void markFailed() {
+        this.status = UploadStatus.FAILED;
     }
 
     void markInProgress() {
         this.status = UploadStatus.IN_PROGRESS;
     }
-    void markCompleted() {
-        this.status = UploadStatus.COMPLETED;
-    }
+
     boolean claimChunk(int index) {
         return chunksInProgress.add(index);
     }

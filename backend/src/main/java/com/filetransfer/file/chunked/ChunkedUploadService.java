@@ -1,4 +1,6 @@
 package com.filetransfer.file.chunked;
+import com.filetransfer.file.FileMetadata;
+import com.filetransfer.file.FileRegisteredEvent;
 
 import com.filetransfer.error.EmptyFileException;
 import com.filetransfer.error.FileTooLargeException;
@@ -7,9 +9,13 @@ import com.filetransfer.error.RoomNotFoundException;
 import com.filetransfer.error.UnsupportedFileTypeException;
 import com.filetransfer.error.UploadSessionNotFoundException;
 import com.filetransfer.error.UploadStateConflictException;
+import com.filetransfer.error.ChunkAssemblyException;
 import com.filetransfer.rooms.RoomService;
 import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,22 +34,28 @@ import java.util.stream.Stream;
 public class ChunkedUploadService {
 
     private static final String DEFAULT_MIME_TYPE = "application/octet-stream";
+    private static final Logger logger = LoggerFactory.getLogger(ChunkedUploadService.class);
 
     private final Path tmpPath;
     private final long chunkSize;
     private final long maxFileSize;
     private final RoomService roomService;
     private final FileTypeValidator fileTypeValidator;
+    private final ChunkAssembler chunkAssembler;
+    private final ApplicationEventPublisher eventPublisher;
     private final Map<UUID, UploadSession> sessionsById = new ConcurrentHashMap<>();
 
     public ChunkedUploadService(ChunkedUploadProperties properties,
                                 RoomService roomService,
-                                FileTypeValidator fileTypeValidator) {
+                                FileTypeValidator fileTypeValidator,
+                                ChunkAssembler chunkAssembler, ApplicationEventPublisher eventPublisher) {
         this.tmpPath = properties.path().resolve("tmp");
         this.chunkSize = properties.chunkSize().toBytes();
         this.maxFileSize = properties.maxFileSize().toBytes();
         this.roomService = roomService;
         this.fileTypeValidator = fileTypeValidator;
+        this.chunkAssembler = chunkAssembler;
+        this.eventPublisher = eventPublisher;
     }
 
     public UploadSession init(@NonNull InitUploadRequest request) {
@@ -98,16 +110,38 @@ public class ChunkedUploadService {
 
     public void abort(UUID uploadId) {
         UploadSession session = getById(uploadId);
-        if (session.status() == UploadStatus.ABORTED || session.status() == UploadStatus.COMPLETED) {
-            throw new UploadStateConflictException("Upload " + uploadId + " is " + session.status() + ", cannot be aborted");
+        if (!session.markAborted()) {
+            throw new UploadStateConflictException(
+                    "Upload " + uploadId + " is " + session.status() + ", cannot be aborted");
         }
-        session.markAborted();
         deleteRecursively(sessionDirectory(uploadId));
     }
 
-    public void receiveChunk(UUID uploadId, int index, InputStream body) {
+    void completeUpload(UploadSession session) {
+        if (!session.markAssembling()) {
+            return;
+        }
+        Path directory = sessionDirectory(session.uploadId());
+        FileMetadata stored;
+        try {
+            stored = chunkAssembler.assemble(session, directory);
+            session.markCompleted(stored.id());
+        } catch (RuntimeException exception) {
+            session.markFailed();
+            logger.error("Assembly failed for upload {}", session.uploadId(), exception);
+            throw new ChunkAssemblyException("Could not assemble upload " + session.uploadId(), exception);
+        } finally {
+            deleteDirectoryQuietly(directory);
+        }
+        eventPublisher.publishEvent(new FileRegisteredEvent(stored));
+    }
+
+
+    public UploadSession receiveChunk(UUID uploadId, int index, InputStream body) {
         UploadSession session = getById(uploadId);
-        if (session.status() == UploadStatus.ABORTED || session.status() == UploadStatus.COMPLETED) {
+        if (session.status() == UploadStatus.ABORTED
+                || session.status() == UploadStatus.COMPLETED
+                || session.status() == UploadStatus.FAILED) {
             throw new UploadStateConflictException(
                     "Upload " + uploadId + " is " + session.status() + ", no more chunks accepted");
         }
@@ -119,17 +153,22 @@ public class ChunkedUploadService {
             expectedSize = session.sizeBytes() - (long) (session.totalChunks() - 1) * session.chunkSize();
         }
         if (!session.claimChunk(index)) {
-            return;
+            return session;
         }
+        boolean allReceived;
         try {
             if (session.receivedChunks().contains(index)) {
-                return;
+                return session;
             }
             storeChunk(uploadId, index, body, expectedSize);
-            recordChunk(session, index);
+            allReceived = recordChunk(session, index);
         } finally {
             session.releaseChunk(index);
         }
+        if (allReceived) {
+            completeUpload(session);
+        }
+        return session;
     }
 
     private void storeChunk(UUID uploadId, int index, InputStream body, long expectedSize) {
@@ -172,14 +211,16 @@ public class ChunkedUploadService {
         return total;
     }
 
-    private void recordChunk(UploadSession session, int index) {
+    private boolean recordChunk(UploadSession session, int index) {
         synchronized (session) {
             session.receivedChunks().add(index);
             if (session.receivedChunks().size() == session.totalChunks()) {
-                session.markCompleted();
-            } else if (session.status() == UploadStatus.INITIALIZED) {
+                return true;
+            }
+            if (session.status() == UploadStatus.INITIALIZED) {
                 session.markInProgress();
             }
+            return false;
         }
     }
 
@@ -195,6 +236,15 @@ public class ChunkedUploadService {
         }
         return name;
     }
+
+    private void deleteDirectoryQuietly(Path directory) {
+        try {
+            deleteRecursively(directory);
+        } catch (IllegalStateException exception) {
+            logger.warn("Could not clean up upload directory {}", directory, exception);
+        }
+    }
+
 
     private void deleteRecursively(Path directory) {
         if (!Files.exists(directory)) {

@@ -9,6 +9,8 @@ public record FileMetadata(
         long size,
         Instant uploadDate,
         String mimeType,
-        String storedFilename
+        String storedFilename,
+        String roomCode,
+        String uploadedBy
 ) {
 }

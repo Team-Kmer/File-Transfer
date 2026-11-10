@@ -5,6 +5,8 @@ import com.filetransfer.error.FileTooLargeException;
 import com.filetransfer.error.RoomNotFoundException;
 import com.filetransfer.error.UnsupportedFileTypeException;
 import com.filetransfer.error.UploadSessionNotFoundException;
+import com.filetransfer.file.FileStorageService;
+import com.filetransfer.file.StorageProperties;
 import com.filetransfer.rooms.RoomService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +44,8 @@ class ChunkedUploadServiceTest {
                 List.of("exe", "bat"));
         RoomService roomService = mock(RoomService.class);
         when(roomService.exists(ROOM)).thenReturn(true);
-        service = new ChunkedUploadService(properties, roomService, new FileTypeValidator(properties));
+        ChunkAssembler assembler = new ChunkAssembler(new FileStorageService(new StorageProperties(tempDir)));
+        service = new ChunkedUploadService(properties, roomService, new FileTypeValidator(properties), assembler, event -> {});
     }
 
     @Test
@@ -148,12 +151,21 @@ class ChunkedUploadServiceTest {
     @Test
     void abortRejectsCompletedUpload() {
         UploadSession session = service.init(new InitUploadRequest("a.txt", 10L, "text/plain", ROOM, null));
-        Path directory = tempDir.resolve("tmp").resolve(session.uploadId().toString());
         service.receiveChunk(session.uploadId(), 0, new ByteArrayInputStream(new byte[10]));
 
         assertThatThrownBy(() -> service.abort(session.uploadId()))
                 .isInstanceOf(UploadStateConflictException.class);
         assertThat(session.status()).isEqualTo(UploadStatus.COMPLETED);
-        assertThat(directory.resolve("0.part")).exists();
+        assertThat(session.fileId()).isNotNull();
+    }
+
+    @Test
+    void abortRejectsUploadBeingAssembled() {
+        UploadSession session = service.init(new InitUploadRequest("a.txt", 10L, "text/plain", ROOM, null));
+        session.markAssembling();
+
+        assertThatThrownBy(() -> service.abort(session.uploadId()))
+                .isInstanceOf(UploadStateConflictException.class);
+        assertThat(session.status()).isEqualTo(UploadStatus.ASSEMBLING);
     }
 }

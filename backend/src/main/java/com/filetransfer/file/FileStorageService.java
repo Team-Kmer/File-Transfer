@@ -6,8 +6,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import java.time.Instant;
@@ -43,24 +45,43 @@ public class FileStorageService {
             throw new IllegalArgumentException("Uploaded file must not be empty");
         }
 
-        String originalName = resolveOriginalName(file);
+        return store(resolveOriginalName(file), file.getContentType(), output -> {
+            try (InputStream inputStream = file.getInputStream()) {
+                inputStream.transferTo(output);
+            }
+        });
+    }
+
+
+    public FileMetadata store(String originalName, String mimeType, ContentWriter content) {
+        return store(originalName, mimeType, null, null, content);
+    }
+
+    public FileMetadata store(String originalName, String mimeType, String roomCode, String uploadedBy, ContentWriter content) {
         UUID id = UUID.randomUUID();
         String storedFilename = id + extractExtension(originalName);
         Path targetPath = storagePath.resolve(storedFilename);
 
-        try (InputStream inputStream = file.getInputStream()) {
-            Files.copy(inputStream, targetPath);
+        long size;
+        try {
+            try (OutputStream output = Files.newOutputStream(targetPath, StandardOpenOption.CREATE_NEW)) {
+                content.writeTo(output);
+            }
+            size = Files.size(targetPath);
         } catch (IOException exception) {
+            deletePartialFile(targetPath, exception);
             throw new IllegalStateException("Could not store file: " + originalName, exception);
         }
 
         FileMetadata metadata = new FileMetadata(
                 id,
                 originalName,
-                file.getSize(),
+                size,
                 Instant.now(),
-                file.getContentType(),
-                storedFilename);
+                mimeType,
+                storedFilename,
+                roomCode,
+                uploadedBy);
 
         metadataById.put(id, metadata);
         return metadata;
@@ -93,6 +114,14 @@ public class FileStorageService {
             Files.deleteIfExists(storagePath.resolve(metadata.storedFilename()));
         } catch (IOException exception) {
             throw new IllegalStateException("Could not delete file: " + id, exception);
+        }
+    }
+
+    private void deletePartialFile(Path targetPath, IOException cause) {
+        try {
+            Files.deleteIfExists(targetPath);
+        } catch (IOException deleteException) {
+            cause.addSuppressed(deleteException);
         }
     }
 

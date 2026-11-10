@@ -108,6 +108,22 @@ class FileStorageServiceTest {
         assertThat(service.findAll()).isEmpty();
     }
 
+    @Test
+    void shouldDeletePartialFileAndRegisterNothingWhenWritingFails() throws IOException {
+        assertThatThrownBy(() -> service.store("big.bin", "application/octet-stream", output -> {
+            output.write("half written".getBytes(StandardCharsets.UTF_8));
+            throw new IOException("No space left on device");
+        }))
+                .isInstanceOf(IllegalStateException.class)
+                .hasRootCauseMessage("No space left on device");
+
+        assertThat(service.findAll()).isEmpty();
+        try (var files = Files.list(storageDirectory)) {
+            assertThat(files).isEmpty();
+        }
+    }
+
+
     private MockMultipartFile textFile(String name, String content) {
         return new MockMultipartFile(
                 "file", name, "text/plain", content.getBytes(StandardCharsets.UTF_8));

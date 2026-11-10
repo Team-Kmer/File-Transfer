@@ -137,6 +137,14 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.UNSUPPORTED_MEDIA_TYPE, exception.getMessage(), request);
     }
 
+    @ExceptionHandler(ChunkAssemblyException.class)
+    public ResponseEntity<ApiError> handleChunkAssemblyException(
+            ChunkAssemblyException exception,
+            HttpServletRequest request
+    ) {
+        return buildError(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), request);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleException(
             Exception exception,
@@ -187,7 +195,6 @@ public class GlobalExceptionHandler {
     ) {
         return buildError(HttpStatus.BAD_REQUEST, "Request body is missing or malformed", request);
     }
-// ---------------------------Helpers---------------------------------------------------
 
     private ResponseEntity<ApiError> buildError(HttpStatus status, String message, HttpServletRequest request) {
         ApiError body = new ApiError(

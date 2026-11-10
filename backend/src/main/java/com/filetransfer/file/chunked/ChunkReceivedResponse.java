@@ -17,9 +17,9 @@ public record ChunkReceivedResponse(
         return new ChunkReceivedResponse(
                 session.uploadId(),
                 index,
-                session.status(),
+                session.status().visibleStatus(),
                 session.receivedChunks().size(),
                 session.totalChunks(),
-                null);
+                session.fileId());
     }
 }
