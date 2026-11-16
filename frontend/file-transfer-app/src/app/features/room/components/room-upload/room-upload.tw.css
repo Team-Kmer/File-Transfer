@@ -1,0 +1,93 @@
+@reference 'tailwindcss';
+
+:host {
+  @apply text-center;
+  @apply flex flex-col items-center justify-center gap-4;
+  @apply min-h-72 min-w-0 border border-dashed p-6;
+  @apply border-(--color-border-strong) bg-(--color-surface);
+  @apply rounded-(--radius-lg) [box-shadow:var(--shadow-sm)];
+}
+
+h2 {
+  @apply [font:var(--text-title)];
+}
+
+.upload-hint,
+.upload-status,
+.cleanup-status {
+  @apply text-sm;
+  @apply text-(--color-text-muted);
+}
+
+.filename {
+  @apply text-sm font-semibold break-all;
+  @apply max-w-full;
+}
+
+.file-chooser,
+.cancel-button,
+.cleanup-retry {
+  @apply text-sm font-semibold;
+  @apply inline-flex items-center justify-center;
+  @apply min-h-11 border px-4;
+  @apply border-(--color-border-strong) bg-(--color-surface);
+  @apply rounded-(--radius-full) cursor-pointer;
+}
+
+.file-input {
+  @apply sr-only;
+}
+
+.is-disabled {
+  @apply text-(--color-text-muted);
+  @apply cursor-not-allowed;
+}
+
+.upload-error,
+.cleanup-error {
+  @apply text-sm;
+  @apply text-(--color-danger);
+}
+
+.resume-button {
+  @apply text-sm font-semibold;
+  @apply inline-flex items-center justify-center;
+  @apply min-h-11 px-5;
+  @apply bg-(--color-primary) text-(--color-on-primary);
+  @apply rounded-(--radius-full) cursor-pointer;
+}
+
+.upload-paused {
+  @apply font-semibold;
+  @apply text-(--color-warning);
+}
+
+.file-chooser:focus-within,
+.resume-button:focus-visible,
+.cancel-button:focus-visible,
+.cleanup-retry:focus-visible {
+  @apply [outline:2px_solid_var(--color-primary)] outline-offset-2;
+}
+
+:host(.is-dragging) {
+  @apply border-(--color-primary) bg-(--color-primary-soft);
+}
+
+.upload-icon {
+  @apply text-3xl;
+  @apply flex items-center justify-center;
+  @apply size-14;
+  @apply bg-(--color-primary-soft) text-(--color-on-primary-soft);
+  @apply rounded-(--radius-lg);
+}
+
+.upload-success {
+  @apply font-semibold;
+  @apply text-(--color-primary);
+}
+
+.completed-file-id {
+  @apply font-(family-name:--font-mono) text-xs break-all;
+  @apply max-w-full;
+  @apply text-(--color-text-muted);
+}
