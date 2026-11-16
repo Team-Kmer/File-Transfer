@@ -1,0 +1,52 @@
+@reference 'tailwindcss';
+
+:host {
+  @apply block;
+  @apply w-full;
+}
+
+.progress-grid {
+  @apply grid grid-cols-20 gap-1 sm:grid-cols-25;
+  @apply w-full;
+}
+
+.progress-cell {
+  @apply aspect-square w-full;
+  @apply bg-(--color-surface-sunken);
+  transition: background-color 250ms ease-out;
+}
+
+.is-filled {
+  @apply bg-(--color-primary);
+  animation: cell-fill 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes cell-fill {
+  from { transform: scale(0.4); opacity: 0.4; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-cell,
+  .is-filled {
+    transition: none;
+    animation: none;
+  }
+}
+
+.progress-summary {
+  @apply font-(family-name:--font-mono) text-xs;
+  @apply mt-3;
+}
+
+.progress-details {
+  @apply text-xs;
+  @apply flex flex-wrap justify-between gap-3;
+  @apply mt-3;
+  @apply text-(--color-text-muted);
+}
+
+dd {
+  @apply font-(family-name:--font-mono);
+  @apply mt-1;
+}

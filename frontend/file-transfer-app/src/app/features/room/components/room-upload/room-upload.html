@@ -1,0 +1,38 @@
+<span class="upload-icon" aria-hidden="true">↑</span>
+<h2>Drop a file here</h2>
+<p class="upload-hint">Up to 2 GB · one file at a time</p>
+<label class="file-chooser" [class.is-disabled]="display().isBusy">
+  Choose a file
+  <input class="file-input" type="file" [disabled]="display().isBusy" (change)="selectFile($event)" />
+</label>
+@if (display().hasFilename) {
+  <p class="filename">{{ display().filename }}</p>
+}
+@if (display().hasProgress) {
+  <app-upload-progress [progress]="display().progress" [canShowMetrics]="display().canShowMetrics" />
+}
+@if (display().isError) {
+  <p class="upload-error" role="alert">{{ display().message }}</p>
+}
+@if (display().hasStatusMessage) {
+  <p class="upload-status" [class.upload-success]="display().isCompleted" [class.upload-paused]="display().isPaused"
+     role="status">
+    <span aria-hidden="true">{{ display().statusIcon }}</span> {{ display().message }}
+  </p>
+}
+@if (display().hasCompletedFile) {
+  <p class="completed-file-id">File ID: {{ display().fileId }}</p>
+}
+@if (display().isCleaningUp) {
+  <p class="cleanup-status" role="status">Cleaning up upload…</p>
+}
+@if (display().hasCleanupError) {
+  <p class="cleanup-error" role="alert">Cleanup failed: {{ display().cleanupMessage }}</p>
+  <button class="cleanup-retry" type="button" (click)="cancelUpload()">Retry cleanup</button>
+}
+@if (display().isPaused) {
+  <button class="resume-button" type="button" (click)="resumeUpload()">Resume now</button>
+}
+@if (display().canCancel) {
+  <button class="cancel-button" type="button" (click)="cancelUpload()">Cancel upload</button>
+}

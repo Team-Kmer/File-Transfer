@@ -5,12 +5,7 @@
 </div>
 <div class="room-grid">
   <div class="room-left">
-    <section class="upload-placeholder" aria-labelledby="upload-title">
-      <span class="upload-icon" aria-hidden="true">↑</span>
-      <h2 id="upload-title">Drop a file here</h2>
-      <p>File sharing will be available soon.</p>
-      <button class="choose-button" type="button" disabled>Choose a file</button>
-    </section>
+    <app-room-upload />
     <app-room-devices [room]="room()" [devices]="devices()" (refreshEvent)="onRefreshEvent()" />
   </div>
   <section class="session-files" aria-labelledby="files-title">
