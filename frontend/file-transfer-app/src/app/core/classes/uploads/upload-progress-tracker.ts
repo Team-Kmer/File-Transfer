@@ -50,6 +50,10 @@ export class UploadProgressTracker {
     return this.plan?.totalChunks ?? 0;
   }
 
+  public connectionLostMessage(): string {
+    return `Connection lost. ${this.receivedChunks()} of ${this.totalChunks()} chunks received.`;
+  }
+
   public snapshot(now: number): ProgressSnapshot {
     return computeProgress(this.acknowledgedBytes(), this.sizeBytes, this.startedAt, now);
   }

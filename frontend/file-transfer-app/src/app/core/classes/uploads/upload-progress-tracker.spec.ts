@@ -14,6 +14,7 @@ describe('UploadProgressTracker', () => {
     expect(tracker.missingIndexes()).toEqual([1]);
     expect(tracker.receivedChunks()).toBe(2);
     expect(tracker.totalChunks()).toBe(3);
+    expect(tracker.connectionLostMessage()).toBe('Connection lost. 2 of 3 chunks received.');
   });
 
   it('replaces acknowledged chunks with the server checkpoint', () => {

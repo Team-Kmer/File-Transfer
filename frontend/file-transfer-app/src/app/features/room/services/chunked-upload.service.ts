@@ -2,12 +2,14 @@ import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core'
 import { EMPTY, finalize, interval, Observable, Subscription, switchMap, tap } from 'rxjs';
 import { isRetryable } from '../../../core/classes/uploads/retry-policy';
 import { isTerminalCheckpoint } from '../../../core/classes/uploads/upload-checkpoint-state';
+import { isAlreadyTerminal, transferErrorAction } from '../../../core/classes/uploads/upload-error-policy';
 import { uploadErrorMessage } from '../../../core/classes/uploads/upload-error-message';
 import { UploadProgressTracker } from '../../../core/classes/uploads/upload-progress-tracker';
 import {
   cancelledState, cancellingState, cleanedUpState, cleaningUpState, cleanupFailedState, completedState, errorState,
   idleState, pausedState, resumedState, uploadingState, withProgress,
 } from '../../../core/classes/uploads/upload-state-transitions';
+import { canCancelUpload, hasFailed, isPaused, isUploadBusy } from '../../../core/classes/uploads/upload-state-rules';
 import { uploadValidationStatus } from '../../../core/classes/uploads/upload-validation';
 import { DeviceIdentity } from '../../../core/device/device-identity';
 import { UploadPhase } from '../../../core/enums/upload-phase';
@@ -21,8 +23,6 @@ import { ChunkedUploadApiService } from '../../../core/services/chunked-upload-a
 import { ChunkedUploadMappingService } from '../../../core/services/chunked-upload-mapping.service';
 import { ChunkTransferService } from './chunk-transfer.service';
 
-// Drives one upload from the room and decides what happens next.
-// Sending chunks: ChunkTransferService. Progress: UploadProgressTracker. Next state: upload-state-transitions.
 @Injectable()
 export class ChunkedUploadService {
   private readonly destroyRefService = inject(DestroyRef);
@@ -48,7 +48,7 @@ export class ChunkedUploadService {
   }
 
   public start(file: File): void {
-    if (this.isBusy()) {
+    if (isUploadBusy(this.state())) {
       return;
     }
     this.uploadState.set(idleState());
@@ -63,7 +63,7 @@ export class ChunkedUploadService {
 
   public resume(): void {
     const uploadId = this.uploadId;
-    if (!this.isPausedState() || !this.hasUploadId(uploadId)) {
+    if (!isPaused(this.state()) || !this.hasUploadId(uploadId)) {
       return;
     }
     this.progressTracker.resume(Date.now());
@@ -74,7 +74,7 @@ export class ChunkedUploadService {
   }
 
   public cancel(): void {
-    if (!this.canCancel()) {
+    if (!canCancelUpload(this.state(), this.hasUploadId(this.uploadId))) {
       return;
     }
     this.requestSubscription?.unsubscribe();
@@ -83,7 +83,7 @@ export class ChunkedUploadService {
       this.receiveCancellation('Upload cancelled.');
       return;
     }
-    if (this.isErrorState()) {
+    if (hasFailed(this.state())) {
       this.cleanupFailedUpload(uploadId);
       return;
     }
@@ -185,15 +185,14 @@ export class ChunkedUploadService {
       return;
     }
     const uploadId = this.uploadId;
-    if (error.status === 409 && this.hasUploadId(uploadId)) {
-      this.reconcileConflict(uploadId, error);
-      return;
+    const action = transferErrorAction(error, this.hasUploadId(uploadId));
+    if (action === 'reconcile') {
+      this.reconcileConflict(uploadId!, error);
+    } else if (action === 'pause') {
+      this.pause(this.progressTracker.connectionLostMessage());
+    } else {
+      this.receiveError(error);
     }
-    if (this.canPause(error)) {
-      this.pause(this.connectionLostMessage());
-      return;
-    }
-    this.receiveError(error);
   }
 
   private reconcileConflict(uploadId: string, conflict: AppError): void {
@@ -203,20 +202,14 @@ export class ChunkedUploadService {
           this.receiveError(conflict);
         }
       },
-      error: (statusError: AppError) => this.canPause(statusError)
-        ? this.pause(this.connectionLostMessage()) : this.receiveError(conflict),
+      error: (statusError: AppError) => isRetryable(statusError.status)
+        ? this.pause(this.progressTracker.connectionLostMessage()) : this.receiveError(conflict),
     });
   }
 
   private pause(message: string): void {
     this.progressTracker.pause(Date.now());
     this.uploadState.update(state => pausedState(state, message));
-  }
-
-  private connectionLostMessage(): string {
-    const received = this.progressTracker.receivedChunks();
-    const total = this.progressTracker.totalChunks();
-    return `Connection lost. ${received} of ${total} chunks received.`;
   }
 
   private receiveError(error: AppError): void {
@@ -231,7 +224,7 @@ export class ChunkedUploadService {
     this.uploadState.update(cancellingState);
     this.chunkedUploadApiService.abort(uploadId).subscribe({
       next: () => this.receiveCancellation('Upload cancelled.'),
-      error: (error: AppError) => this.isAlreadyTerminal(error)
+      error: (error: AppError) => isAlreadyTerminal(error)
         ? this.receiveCancellation(uploadErrorMessage(error)) : this.receiveCleanupError(error),
     });
   }
@@ -245,7 +238,7 @@ export class ChunkedUploadService {
     this.uploadState.update(cleaningUpState);
     this.chunkedUploadApiService.abort(uploadId).subscribe({
       next: () => this.finishFailedCleanup(),
-      error: (error: AppError) => this.isAlreadyTerminal(error)
+      error: (error: AppError) => isAlreadyTerminal(error)
         ? this.finishFailedCleanup() : this.receiveCleanupError(error),
     });
   }
@@ -257,36 +250,6 @@ export class ChunkedUploadService {
 
   private receiveCleanupError(error: AppError): void {
     this.uploadState.update(state => cleanupFailedState(state, uploadErrorMessage(error)));
-  }
-
-  private canCancel(): boolean {
-    const state = this.state();
-    return !state.isCleaningUp && (
-      state.phase === UploadPhase.Uploading || this.isPausedState()
-      || this.isErrorState() && this.hasUploadId(this.uploadId)
-    );
-  }
-
-  private isBusy(): boolean {
-    const state = this.state();
-    return state.phase === UploadPhase.Uploading || state.phase === UploadPhase.Cancelling
-      || this.isPausedState() || state.isCleaningUp || state.cleanupMessage.length > 0;
-  }
-
-  private canPause(error: AppError): boolean {
-    return isRetryable(error.status) && this.hasUploadId(this.uploadId);
-  }
-
-  private isAlreadyTerminal(error: AppError): boolean {
-    return error.status === 404 || error.status === 409;
-  }
-
-  private isErrorState(): boolean {
-    return this.state().phase === UploadPhase.Error;
-  }
-
-  private isPausedState(): boolean {
-    return this.state().phase === UploadPhase.Paused;
   }
 
   private hasValidationError(status: number | null): status is number {
