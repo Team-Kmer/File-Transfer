@@ -13,14 +13,23 @@ describe('ChunkedUploadService', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
-    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
+    vi.useFakeTimers({
+      toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
+    });
     vi.setSystemTime(1000);
-    TestBed.configureTestingModule({ providers: [ChunkedUploadService,
-      provideHttpClient(withInterceptors([errorInterceptor])), provideHttpClientTesting(),
-      { provide: DeviceIdentity, useValue: { deviceId: 'device-1' } },
-    ] });
+    TestBed.configureTestingModule({
+      providers: [
+        ChunkedUploadService,
+        provideHttpClient(withInterceptors([errorInterceptor])),
+        provideHttpClientTesting(),
+        { provide: DeviceIdentity, useValue: { deviceId: 'device-1' } },
+      ],
+    });
     TestBed.inject(RoomSessionService).room.set({
-      code: '012345', createdAt: '', expiresAt: '', devices: [],
+      code: '012345',
+      createdAt: '',
+      expiresAt: '',
+      devices: [],
     });
     service = TestBed.inject(ChunkedUploadService);
     http = TestBed.inject(HttpTestingController);
@@ -40,7 +49,9 @@ describe('ChunkedUploadService', () => {
     expect(final.request.body.size).toBe(2);
     final.flush({ status: 'COMPLETED', fileId: 'file-1' });
     expect(service.state()).toMatchObject({
-      phase: 'completed', fileId: 'file-1', progress: { sentBytes: 12, percent: 100 },
+      phase: 'completed',
+      fileId: 'file-1',
+      progress: { sentBytes: 12, percent: 100 },
     });
   });
 
@@ -49,8 +60,11 @@ describe('ChunkedUploadService', () => {
     const init = http.expectOne(`${endpoint}/init`);
     expect(init.request.method).toBe('POST');
     expect(init.request.body).toEqual({
-      filename: 'archive.zip', sizeBytes: 12, mimeType: 'application/zip',
-      roomCode: '012345', deviceId: 'device-1',
+      filename: 'archive.zip',
+      sizeBytes: 12,
+      mimeType: 'application/zip',
+      roomCode: '012345',
+      deviceId: 'device-1',
     });
     init.flush({ uploadId: 'upload-1', chunkSize: 5, totalChunks: 3 });
   }
@@ -82,7 +96,9 @@ describe('ChunkedUploadService', () => {
     vi.advanceTimersByTime(1);
     http.expectOne(`${endpoint}/upload-1/chunks/0`).flush({ status: 'IN_PROGRESS' });
     expect(service.state().progress.sentBytes).toBe(5);
-    http.expectOne(`${endpoint}/upload-1/chunks/1`).flush({ status: 'COMPLETED', fileId: 'file-2' });
+    http
+      .expectOne(`${endpoint}/upload-1/chunks/1`)
+      .flush({ status: 'COMPLETED', fileId: 'file-2' });
     expect(service.state().fileId).toBe('file-2');
   });
 
@@ -100,22 +116,28 @@ describe('ChunkedUploadService', () => {
     http.expectNone(() => true);
   });
 
-  it.each([400, 404, 409, 413, 415])('does not retry a final chunk failure with status %s', status => {
-    beginUpload();
-    failChunk(0, status);
-    http.expectOne({ method: 'DELETE', url: `${endpoint}/upload-1` }).flush(null);
-    expect(service.state().phase).toBe('error');
-    vi.advanceTimersByTime(4000);
-    http.expectNone(() => true);
-  });
+  it.each([400, 404, 409, 413, 415])(
+    'does not retry a final chunk failure with status %s',
+    (status) => {
+      beginUpload();
+      failChunk(0, status);
+      http.expectOne({ method: 'DELETE', url: `${endpoint}/upload-1` }).flush(null);
+      expect(service.state().phase).toBe('error');
+      vi.advanceTimersByTime(4000);
+      http.expectNone(() => true);
+    },
+  );
 
   function beginUpload(): void {
     service.start(new File(['abcdefghij'], 'notes.txt'));
-    http.expectOne(`${endpoint}/init`).flush({ uploadId: 'upload-1', chunkSize: 5, totalChunks: 2 });
+    http
+      .expectOne(`${endpoint}/init`)
+      .flush({ uploadId: 'upload-1', chunkSize: 5, totalChunks: 2 });
   }
 
   function failChunk(index: number, status: number): void {
-    http.expectOne(`${endpoint}/upload-1/chunks/${index}`)
+    http
+      .expectOne(`${endpoint}/upload-1/chunks/${index}`)
       .flush({}, { status, statusText: 'Failure' });
   }
 
@@ -127,7 +149,9 @@ describe('ChunkedUploadService', () => {
     vi.advanceTimersByTime(1000);
     expect(service.state().progress.bytesPerSecond).toBe(2.5);
     expect(service.state().progress.remainingSeconds).toBe(2);
-    http.expectOne(`${endpoint}/upload-1/chunks/1`).flush({ status: 'COMPLETED', fileId: 'file-3' });
+    http
+      .expectOne(`${endpoint}/upload-1/chunks/1`)
+      .flush({ status: 'COMPLETED', fileId: 'file-3' });
     const finalProgress = service.state().progress;
     vi.advanceTimersByTime(5000);
     expect(service.state().progress).toEqual(finalProgress);
@@ -191,8 +215,12 @@ describe('ChunkedUploadService', () => {
 
   it('leaves an acknowledged completion intact when cancel is called', () => {
     service.start(new File(['hello'], 'notes.txt'));
-    http.expectOne(`${endpoint}/init`).flush({ uploadId: 'upload-1', chunkSize: 5, totalChunks: 1 });
-    http.expectOne(`${endpoint}/upload-1/chunks/0`).flush({ status: 'COMPLETED', fileId: 'file-4' });
+    http
+      .expectOne(`${endpoint}/init`)
+      .flush({ uploadId: 'upload-1', chunkSize: 5, totalChunks: 1 });
+    http
+      .expectOne(`${endpoint}/upload-1/chunks/0`)
+      .flush({ status: 'COMPLETED', fileId: 'file-4' });
     service.cancel();
     expect(service.state().fileId).toBe('file-4');
     expect(service.state().phase).toBe('completed');
@@ -235,11 +263,17 @@ describe('ChunkedUploadService', () => {
 
   it('clears the previous completed file before reporting a selection validation error', () => {
     service.start(new File(['hello'], 'ft44-check.bin'));
-    http.expectOne(`${endpoint}/init`).flush({ uploadId: 'upload-1', chunkSize: 5, totalChunks: 1 });
-    http.expectOne(`${endpoint}/upload-1/chunks/0`).flush({ status: 'COMPLETED', fileId: 'file-1' });
+    http
+      .expectOne(`${endpoint}/init`)
+      .flush({ uploadId: 'upload-1', chunkSize: 5, totalChunks: 1 });
+    http
+      .expectOne(`${endpoint}/upload-1/chunks/0`)
+      .flush({ status: 'COMPLETED', fileId: 'file-1' });
     service.start(new File(['x'], 'virus.exe'));
     expect(service.state()).toMatchObject({
-      phase: 'error', filename: '', fileId: null,
+      phase: 'error',
+      filename: '',
+      fileId: null,
       progress: { sentBytes: 0, totalBytes: 0, percent: 0, filledCells: 0 },
       message: 'Blocked file type',
     });
@@ -248,8 +282,12 @@ describe('ChunkedUploadService', () => {
 
   it('does not abort a completed upload after later validation fails', () => {
     service.start(new File(['hello'], 'completed.bin'));
-    http.expectOne(`${endpoint}/init`).flush({ uploadId: 'upload-1', chunkSize: 5, totalChunks: 1 });
-    http.expectOne(`${endpoint}/upload-1/chunks/0`).flush({ status: 'COMPLETED', fileId: 'file-1' });
+    http
+      .expectOne(`${endpoint}/init`)
+      .flush({ uploadId: 'upload-1', chunkSize: 5, totalChunks: 1 });
+    http
+      .expectOne(`${endpoint}/upload-1/chunks/0`)
+      .flush({ status: 'COMPLETED', fileId: 'file-1' });
     service.start(new File(['x'], 'virus.exe'));
     service.cancel();
     http.expectNone(() => true);
@@ -261,24 +299,37 @@ describe('ChunkedUploadService', () => {
     failChunk(0, 415);
     http.expectOne(`${endpoint}/upload-1`).flush({}, { status: 503, statusText: 'Unavailable' });
     expect(service.state()).toMatchObject({
-      phase: 'error', message: 'Blocked file type', isCleaningUp: false,
+      phase: 'error',
+      message: 'Blocked file type',
+      isCleaningUp: false,
       cleanupMessage: 'Server error. Please try again later.',
     });
     service.start(new File(['next'], 'next.txt'));
     http.expectNone(`${endpoint}/init`);
     service.cancel();
     http.expectOne(`${endpoint}/upload-1`).flush(null);
-    expect(service.state()).toMatchObject({ phase: 'error', message: 'Blocked file type', cleanupMessage: '' });
+    expect(service.state()).toMatchObject({
+      phase: 'error',
+      message: 'Blocked file type',
+      cleanupMessage: '',
+    });
   });
 
-  it.each([404, 409])('accepts cleanup status %s without losing the original upload error', status => {
-    beginUpload();
-    failChunk(0, 415);
-    http.expectOne(`${endpoint}/upload-1`).flush({}, { status, statusText: 'Gone' });
-    expect(service.state()).toMatchObject({ phase: 'error', message: 'Blocked file type', isCleaningUp: false });
-    service.cancel();
-    http.expectNone(() => true);
-  });
+  it.each([404, 409])(
+    'accepts cleanup status %s without losing the original upload error',
+    (status) => {
+      beginUpload();
+      failChunk(0, 415);
+      http.expectOne(`${endpoint}/upload-1`).flush({}, { status, statusText: 'Gone' });
+      expect(service.state()).toMatchObject({
+        phase: 'error',
+        message: 'Blocked file type',
+        isCleaningUp: false,
+      });
+      service.cancel();
+      http.expectNone(() => true);
+    },
+  );
 
   it('reconciles server acknowledgements before resuming only missing chunks', () => {
     initializeArchive();
@@ -291,14 +342,90 @@ describe('ChunkedUploadService', () => {
     expect(service.state().phase).toBe('paused');
     service.resume();
     http.expectOne({ method: 'GET', url: endpoint + '/upload-1' }).flush({
-      uploadId: 'upload-1', filename: 'archive.zip', sizeBytes: 12, status: 'IN_PROGRESS',
-      chunkSize: 5, totalChunks: 3, receivedIndexes: [0, 1],
+      uploadId: 'upload-1',
+      filename: 'archive.zip',
+      sizeBytes: 12,
+      status: 'IN_PROGRESS',
+      chunkSize: 5,
+      totalChunks: 3,
+      receivedIndexes: [0, 1],
     });
     expect(service.state().progress.sentBytes).toBe(10);
     http.expectNone(endpoint + '/init');
     http.expectNone(endpoint + '/upload-1/chunks/1');
-    http.expectOne(endpoint + '/upload-1/chunks/2').flush({ status: 'COMPLETED', fileId: 'resumed-file' });
-    expect(service.state()).toMatchObject({ phase: 'completed', fileId: 'resumed-file', progress: { sentBytes: 12 } });
+    http
+      .expectOne(endpoint + '/upload-1/chunks/2')
+      .flush({ status: 'COMPLETED', fileId: 'resumed-file' });
+    expect(service.state()).toMatchObject({
+      phase: 'completed',
+      fileId: 'resumed-file',
+      progress: { sentBytes: 12 },
+    });
   });
 
+  it('re-reads the status when the last chunk is acknowledged while the server is still assembling', () => {
+    beginUpload();
+    http.expectOne(`${endpoint}/upload-1/chunks/0`).flush({ status: 'IN_PROGRESS' });
+    http.expectOne(`${endpoint}/upload-1/chunks/1`).flush({ status: 'IN_PROGRESS' });
+    expect(service.state().phase).toBe('uploading');
+    flushStatus('IN_PROGRESS', [0, 1]);
+    vi.advanceTimersByTime(500);
+    flushStatus('COMPLETED', [0, 1], 'assembled-file');
+    expect(service.state()).toMatchObject({ phase: 'completed', fileId: 'assembled-file' });
+  });
+
+  it('does not stay stuck on uploading when resume finds every chunk received but no COMPLETED yet', () => {
+    pauseOnLastChunk();
+    service.resume();
+    flushStatus('IN_PROGRESS', [0, 1]);
+    http.expectNone(`${endpoint}/upload-1/chunks/1`);
+    flushStatus('IN_PROGRESS', [0, 1]);
+    for (const delay of [500, 1000, 2000]) {
+      vi.advanceTimersByTime(delay);
+      flushStatus('IN_PROGRESS', [0, 1]);
+    }
+    expect(service.state()).toMatchObject({
+      phase: 'paused',
+      message: 'The server is still finishing the file. Try again in a moment.',
+    });
+    service.resume();
+    flushStatus('COMPLETED', [0, 1], 'late-file');
+    expect(service.state()).toMatchObject({ phase: 'completed', fileId: 'late-file' });
+  });
+
+  it('reports a FAILED upload as an error and cleans it up', () => {
+    pauseOnLastChunk();
+    service.resume();
+    flushStatus('FAILED', [0, 1]);
+    http.expectOne({ method: 'DELETE', url: `${endpoint}/upload-1` }).flush(null);
+    expect(service.state()).toMatchObject({
+      phase: 'error',
+      message: 'Server error. Please try again later.',
+    });
+    http.expectNone(() => true);
+  });
+
+  function pauseOnLastChunk(): void {
+    beginUpload();
+    http.expectOne(`${endpoint}/upload-1/chunks/0`).flush({ status: 'IN_PROGRESS' });
+    failChunk(1, 503);
+    for (const delay of [500, 1000, 2000]) {
+      vi.advanceTimersByTime(delay);
+      failChunk(1, 503);
+    }
+    expect(service.state().phase).toBe('paused');
+  }
+
+  function flushStatus(status: string, receivedIndexes: number[], fileId?: string): void {
+    http.expectOne({ method: 'GET', url: `${endpoint}/upload-1` }).flush({
+      uploadId: 'upload-1',
+      filename: 'notes.txt',
+      sizeBytes: 10,
+      status,
+      chunkSize: 5,
+      totalChunks: 2,
+      receivedIndexes,
+      fileId,
+    });
+  }
 });

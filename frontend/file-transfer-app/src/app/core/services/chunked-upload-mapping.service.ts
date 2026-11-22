@@ -29,6 +29,7 @@ export class ChunkedUploadMappingService {
     return {
       isCompleted: response.status === UploadServerStatus.Completed,
       isAborted: response.status === UploadServerStatus.Aborted,
+      isFailed: response.status === UploadServerStatus.Failed,
       fileId: response.fileId ?? null,
       receivedIndexes: response.receivedIndexes,
     };
