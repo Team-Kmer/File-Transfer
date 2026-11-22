@@ -1,5 +1,5 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting, TestRequest } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -42,6 +42,7 @@ describe('Room route', () => {
     expect(page().textContent).toContain('Guest phone');
     expect(page().textContent).toContain('Session files');
     expect(page().textContent).toContain('No files yet');
+    expect(page().querySelector<HTMLInputElement>('app-room-upload input[type=file]')?.disabled).toBe(false);
     expect(page().querySelector('.device-counter')).toBeNull();
   });
 
@@ -117,4 +118,35 @@ describe('Room route', () => {
     return { code: '012345', createdAt: '', expiresAt: new Date(Date.now() + 60000).toISOString(),
       devices: [{ deviceId: 'guest', name: 'Guest phone', joinedAt: '' }] };
   }
+  it('clears upload state when switching room codes on the same route', async () => {
+    await joinInitialRoom();
+    const pendingChunk = beginRoomUpload();
+    await harness.navigateByUrl('/room/654321');
+    expect(pendingChunk.cancelled).toBe(true);
+    const cleanup = http.expectOne({ method: 'DELETE', url: `${environment.apiBaseUrl}/files/upload/old-upload` });
+    http.expectOne(`${environment.apiBaseUrl}/rooms/654321/join`).flush({ ...room(), code: '654321' });
+    await harness.fixture.whenStable();
+    cleanup.flush(null);
+    await harness.fixture.whenStable();
+    expect(page().querySelector('[role=progressbar]')).toBeNull();
+    expect(page().textContent).not.toContain('cancel-me.bin');
+    expect(page().textContent).not.toContain('Upload cancelled.');
+  });
+
+  async function joinInitialRoom(): Promise<void> {
+    await harness.navigateByUrl('/room/012345');
+    http.expectOne(`${endpoint}/join`).flush(room());
+    await harness.fixture.whenStable();
+  }
+
+  function beginRoomUpload(): TestRequest {
+    const input = page().querySelector<HTMLInputElement>('app-room-upload input[type=file]')!;
+    Object.defineProperty(input, 'files', { value: [new File(['abcdefghij'], 'cancel-me.bin')] });
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    const uploadEndpoint = `${environment.apiBaseUrl}/files/upload`;
+    http.expectOne(`${uploadEndpoint}/init`).flush({ uploadId: 'old-upload', chunkSize: 5, totalChunks: 2 });
+    http.expectOne(`${uploadEndpoint}/old-upload/chunks/0`).flush({ status: 'IN_PROGRESS' });
+    return http.expectOne(`${uploadEndpoint}/old-upload/chunks/1`);
+  }
+
 });

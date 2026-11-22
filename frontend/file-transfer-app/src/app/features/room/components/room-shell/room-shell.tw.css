@@ -29,8 +29,7 @@ h1 {
   @apply text-(--color-text-muted);
 }
 
-.back-button,
-.choose-button {
+.back-button {
   @apply text-sm font-semibold;
   @apply min-h-11 border px-4;
   @apply border-(--color-border-strong) bg-(--color-surface);
@@ -44,36 +43,6 @@ h1 {
 .room-left {
   @apply flex flex-col gap-5;
   @apply min-w-0;
-}
-
-.upload-placeholder {
-  @apply text-center;
-  @apply flex flex-col items-center justify-center gap-4;
-  @apply min-h-72 border border-dashed p-6;
-  @apply border-(--color-border-strong) bg-(--color-surface);
-  @apply rounded-(--radius-lg) [box-shadow:var(--shadow-sm)];
-}
-
-.upload-icon {
-  @apply text-3xl;
-  @apply flex items-center justify-center;
-  @apply size-16;
-  @apply bg-(--color-primary-soft) text-(--color-on-primary-soft);
-  @apply rounded-(--radius-lg);
-}
-
-.upload-placeholder h2 {
-  @apply [font:var(--text-title)];
-}
-
-.upload-placeholder p {
-  @apply text-sm;
-  @apply text-(--color-text-muted);
-}
-
-.choose-button:disabled {
-  @apply border-(--color-border) bg-(--color-surface-sunken) text-(--color-text-muted);
-  @apply cursor-not-allowed;
 }
 
 .session-files {
@@ -129,7 +98,4 @@ button:focus-visible {
     @apply grid-cols-2;
   }
 
-  .upload-placeholder {
-    @apply min-h-88;
-  }
 }

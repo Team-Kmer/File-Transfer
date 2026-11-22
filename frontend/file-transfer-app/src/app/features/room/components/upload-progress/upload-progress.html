@@ -1,0 +1,11 @@
+<div class="progress-grid" role="progressbar" aria-label="Acknowledged upload progress"
+     aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="display().percent">
+  @for (isFilled of display().cells; track $index) {
+    <span class="progress-cell" [class.is-filled]="isFilled" aria-hidden="true"></span>
+  }
+</div>
+<p class="progress-summary"><strong>{{ display().percentLabel }}</strong> · {{ display().bytesLabel }}</p>
+<dl class="progress-details">
+  <div><dt>Average speed</dt><dd>{{ display().speedLabel }}</dd></div>
+  <div><dt>Time remaining</dt><dd>{{ display().remainingLabel }}</dd></div>
+</dl>
