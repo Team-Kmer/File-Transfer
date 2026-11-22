@@ -116,7 +116,7 @@ describe('ChunkedUploadService', () => {
     http.expectNone(() => true);
   });
 
-  it.each([400, 404, 409, 413, 415])(
+  it.each([400, 404, 413, 415])(
     'does not retry a final chunk failure with status %s',
     (status) => {
       beginUpload();
@@ -402,6 +402,26 @@ describe('ChunkedUploadService', () => {
       phase: 'error',
       message: 'Server error. Please try again later.',
     });
+    http.expectNone(() => true);
+  });
+
+  it('treats a 409 on the last chunk as success when the server already completed the upload', () => {
+    beginUpload();
+    http.expectOne(`${endpoint}/upload-1/chunks/0`).flush({ status: 'IN_PROGRESS' });
+    failChunk(1, 503);
+    vi.advanceTimersByTime(500);
+    failChunk(1, 409);
+    flushStatus('COMPLETED', [0, 1], 'saved-file');
+    expect(service.state()).toMatchObject({ phase: 'completed', fileId: 'saved-file' });
+    http.expectNone({ method: 'DELETE', url: `${endpoint}/upload-1` });
+  });
+
+  it('reports a chunk 409 as an error when the upload is not completed', () => {
+    beginUpload();
+    failChunk(0, 409);
+    flushStatus('IN_PROGRESS', []);
+    http.expectOne({ method: 'DELETE', url: `${endpoint}/upload-1` }).flush(null);
+    expect(service.state().phase).toBe('error');
     http.expectNone(() => true);
   });
 

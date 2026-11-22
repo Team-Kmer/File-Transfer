@@ -184,11 +184,28 @@ export class ChunkedUploadService {
       this.pause(error.message);
       return;
     }
+    const uploadId = this.uploadId;
+    if (error.status === 409 && this.hasUploadId(uploadId)) {
+      this.reconcileConflict(uploadId, error);
+      return;
+    }
     if (this.canPause(error)) {
       this.pause(this.connectionLostMessage());
       return;
     }
     this.receiveError(error);
+  }
+
+  private reconcileConflict(uploadId: string, conflict: AppError): void {
+    this.requestSubscription = this.chunkedUploadApiService.getStatus(uploadId).subscribe({
+      next: checkpoint => {
+        if (!this.settle(checkpoint)) {
+          this.receiveError(conflict);
+        }
+      },
+      error: (statusError: AppError) => this.canPause(statusError)
+        ? this.pause(this.connectionLostMessage()) : this.receiveError(conflict),
+    });
   }
 
   private pause(message: string): void {
